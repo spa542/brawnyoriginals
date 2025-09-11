@@ -208,3 +208,7 @@ __marimo__/
 
 # Frontend Files
 frontend/dist
+node_modules
+
+# Mac files
+.DS_Store

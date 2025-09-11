@@ -37,7 +37,7 @@ install: venv
 # Start the development server
 dev: install
 	@echo "Starting FastAPI development server..."
-	PYTHONPATH=. $(UVICORN) main:app --reload --host 0.0.0.0 --port 8000
+	PYTHONPATH=. $(UVICORN) app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Build for production
 build: install
@@ -51,7 +51,8 @@ serve: build
 		echo "Error: Frontend not built. Run 'make build' in the frontend directory first."; \
 		exit 1; \
 	fi
-	ENV=production $(PYTHON) -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+	export ENV=production && \
+	$(PYTHON) -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 # Run tests
 test: install
