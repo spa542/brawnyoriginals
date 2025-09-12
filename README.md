@@ -60,7 +60,3 @@ brawnyoriginals/
 Once the backend server is running, you can access:
 - API Docs: `http://localhost:8000/docs`
 - Alternative API Docs: `http://localhost:8000/redoc`
-
-## License
-
-MIT

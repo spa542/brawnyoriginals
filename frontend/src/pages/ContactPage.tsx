@@ -19,13 +19,16 @@ const ContactPage: React.FC = () => {
     e.preventDefault();
     // Handle form submission here
     console.log('Form submitted:', formData);
-    alert('Thank you for your message! We will get back to you soon.');
+    alert('Thank you for your message! I will get back to you soon.');
     setFormData({ name: '', email: '', message: '' });
   };
 
   return (
     <div className="py-8 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Contact Us</h2>
+      <h2 className="text-2xl font-bold mb-2">Contact Me</h2>
+      <p className="text-gray-600 mb-6">
+        Interested in online coaching or have questions? Please fill out the form below and I will get back to you soon.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
@@ -68,7 +71,7 @@ const ContactPage: React.FC = () => {
             type="submit"
             className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            Send Message
+            Send
           </button>
         </div>
       </form>
