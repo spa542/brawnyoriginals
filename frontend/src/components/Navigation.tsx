@@ -46,7 +46,7 @@ const Navigation: React.FC = () => {
             <Link to="/" className="flex items-center space-x-2">
               <div className="h-14 w-14 flex items-center justify-center">
                 <img 
-                  src="/images/brawny_originals_logo_white_no_bg.png" 
+                  src={`${import.meta.env.PROD ? '/static/' : ''}images/brawny_originals_logo_white_no_bg.png`}
                   alt="Brawny Originals Logo"
                   className="h-full w-auto object-contain"
                 />
