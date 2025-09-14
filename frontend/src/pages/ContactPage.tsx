@@ -25,7 +25,7 @@ const ContactPage: React.FC = () => {
 
   return (
     <div className="py-8 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-2">Contact Me</h2>
+      <h2 className="text-2xl font-bold mb-2">Contact Us</h2>
       <p className="text-gray-600 mb-6">
         Interested in online coaching or have questions? Please fill out the form below and I will get back to you soon.
       </p>

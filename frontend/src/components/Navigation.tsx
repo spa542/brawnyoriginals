@@ -38,13 +38,20 @@ const Navigation: React.FC = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-black shadow-sm text-white">
       <div className="w-full px-8 lg:px-16">
         <div className="flex items-center justify-between h-24">
           {/* Left section - Logo */}
           <div className="flex-shrink-0">
-            <Link to="/">
-              <span className="text-2xl font-pacifico text-gray-900 hover:text-gray-700 transition-colors duration-200">Brawny Originals</span>
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="h-14 w-14 flex items-center justify-center">
+                <img 
+                  src="/images/brawny_originals_logo_white_no_bg.png" 
+                  alt="Brawny Originals Logo"
+                  className="h-full w-auto object-contain"
+                />
+              </div>
+              <span className="text-2xl font-pacifico text-white hover:text-gray-300 transition-colors duration-200">Brawny Originals</span>
             </Link>
           </div>
           
@@ -57,8 +64,8 @@ const Navigation: React.FC = () => {
                   to={item.path}
                   className={`${
                     location.pathname === item.path
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      ? 'border-blue-400 text-white'
+                      : 'border-transparent text-gray-300 hover:border-gray-400 hover:text-white'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-base font-medium`}
                 >
                   {item.label}
@@ -71,7 +78,7 @@ const Navigation: React.FC = () => {
           <div className="ml-auto relative" ref={cartRef}>
             <button 
               onClick={toggleCart}
-              className="relative p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              className="relative p-2.5 rounded-full text-gray-300 hover:bg-gray-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition-colors duration-200"
               aria-label="Shopping cart"
             >
               <FiShoppingCart className="h-7 w-7" />
