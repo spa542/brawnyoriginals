@@ -42,9 +42,33 @@ code {
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
+  @apply bg-tertiary-600 text-white hover:bg-tertiary-700;
 }
 
 .btn-secondary {
-  @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  @apply bg-secondary-200 text-primary-800 hover:bg-secondary-300;
+}
+
+/* Apply the color scheme to form elements */
+input:focus, textarea:focus, select:focus {
+  @apply ring-2 ring-tertiary-500 border-tertiary-500;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-secondary-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-tertiary-500 rounded-full hover:bg-tertiary-600;
+}
+
+/* Custom selection color */
+::selection {
+  @apply bg-tertiary-100 text-primary-900;
 }

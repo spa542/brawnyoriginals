@@ -3,6 +3,7 @@ import { CartProvider } from './context/CartContext';
 import Navigation from './components/Navigation';
 import BottomNavigation from './components/BottomNavigation';
 import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
 import ProgramsPage from './pages/ProgramsPage';
 import ContactPage from './pages/ContactPage';
 
@@ -10,11 +11,12 @@ function App() {
   return (
     <CartProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="min-h-screen flex flex-col">
           <Navigation />
-          <main className="flex-grow w-full overflow-auto">
+          <main className="flex-grow w-full">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/programs" element={
                 <div className="w-full">
                   <ProgramsPage />

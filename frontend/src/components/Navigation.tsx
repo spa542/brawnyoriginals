@@ -34,11 +34,12 @@ const Navigation: React.FC = () => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/programs', label: 'Programs' },
+    { path: '/about', label: 'About' },
     { path: '/contact', label: 'Contact' },
   ];
 
   return (
-    <nav className="bg-black shadow-sm text-white">
+    <nav className="bg-primary shadow-sm text-secondary">
       <div className="w-full px-8 lg:px-16">
         <div className="flex items-center justify-between h-24">
           {/* Left section - Logo */}
@@ -51,7 +52,7 @@ const Navigation: React.FC = () => {
                   className="h-full w-auto object-contain"
                 />
               </div>
-              <span className="text-2xl font-pacifico text-white hover:text-gray-300 transition-colors duration-200">Brawny Originals</span>
+              <span className="text-2xl font-pacifico text-secondary hover:text-opacity-80 transition-colors duration-200">Brawny Originals</span>
             </Link>
           </div>
           
@@ -64,9 +65,9 @@ const Navigation: React.FC = () => {
                   to={item.path}
                   className={`${
                     location.pathname === item.path
-                      ? 'border-blue-400 text-white'
-                      : 'border-transparent text-gray-300 hover:border-gray-400 hover:text-white'
-                  } inline-flex items-center px-1 pt-1 border-b-2 text-base font-medium`}
+                      ? 'border-tertiary-500 text-secondary'
+                      : 'border-transparent text-secondary text-opacity-80 hover:border-tertiary-400 hover:text-opacity-100'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-base font-medium transition-colors duration-200`}
                 >
                   {item.label}
                 </Link>
@@ -78,12 +79,12 @@ const Navigation: React.FC = () => {
           <div className="ml-auto relative" ref={cartRef}>
             <button 
               onClick={toggleCart}
-              className="relative p-2.5 rounded-full text-gray-300 hover:bg-gray-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition-colors duration-200"
+              className="relative p-2.5 rounded-full text-secondary text-opacity-80 hover:bg-opacity-20 hover:bg-secondary hover:text-opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-200"
               aria-label="Shopping cart"
             >
               <FiShoppingCart className="h-7 w-7" />
               {cartItems.length > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-secondary bg-tertiary-600 transform translate-x-1/2 -translate-y-1/2 rounded-full">
                   {cartItems.length}
                 </span>
               )}
@@ -91,7 +92,7 @@ const Navigation: React.FC = () => {
             {isCartOpen && (
               <div className="absolute top-full right-0 w-80 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden z-50 transform transition-all duration-200 ease-in-out">
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
-                  <h3 className="text-lg font-medium text-gray-900">Your Cart</h3>
+                  <h3 className="text-lg font-medium text-primary">Your Cart</h3>
                   <p className="text-sm text-gray-500">{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}</p>
                 </div>
                 
@@ -116,8 +117,8 @@ const Navigation: React.FC = () => {
                               </div>
                               <div className="ml-3 flex-1">
                                 <div className="flex justify-between">
-                                  <h4 className="text-sm font-medium text-gray-900">{item.title}</h4>
-                                  <span className="text-sm font-medium text-gray-900">${item.price?.toFixed(2)}</span>
+                                  <h4 className="text-sm font-medium text-primary">{item.title}</h4>
+                                  <span className="text-sm font-medium text-primary">${item.price?.toFixed(2)}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">{item.duration} weeks</p>
                               </div>
@@ -126,7 +127,7 @@ const Navigation: React.FC = () => {
                                   e.stopPropagation();
                                   removeItem(item.id);
                                 }}
-                                className="ml-4 text-gray-400 hover:text-gray-500"
+                                className="ml-4 text-gray-400 hover:text-tertiary-600"
                               >
                                 <FiX size={16} />
                               </button>
@@ -136,19 +137,19 @@ const Navigation: React.FC = () => {
                       </ul>
                     </div>
                     <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-3">
-                      <div className="flex justify-between text-base font-medium text-gray-900">
+                      <div className="flex justify-between text-base font-medium text-primary">
                         <p>Subtotal</p>
                         <p>${cartTotal.toFixed(2)}</p>
                       </div>
                       <div className="flex space-x-3">
                         <button 
                           onClick={() => clearCart()}
-                          className="flex-1 flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                          className="flex-1 flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-primary bg-white hover:bg-gray-50"
                         >
                           Clear Cart
                         </button>
                         <button 
-                          className="flex-1 flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                          className="flex-1 flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-tertiary-600 hover:bg-tertiary-700"
                         >
                           Checkout
                         </button>
@@ -171,17 +172,18 @@ const Navigation: React.FC = () => {
               to={item.path}
               className={`${
                 location.pathname === item.path
-                  ? 'bg-blue-50 border-blue-500 text-blue-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium'
-                  : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium'
-              }`}
+                  ? 'bg-tertiary-50 border-tertiary-500 text-tertiary-700'
+                  : 'border-transparent text-secondary text-opacity-80 hover:bg-gray-50 hover:border-tertiary-300 hover:text-opacity-100'
+              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
             >
               {item.label}
             </Link>
           ))}
           <div className="px-3 py-2">
             <button 
-              className="flex items-center text-gray-600 hover:text-gray-900"
+              className="flex items-center text-secondary text-opacity-80 hover:text-opacity-100"
               aria-label="Shopping cart"
+              onClick={toggleCart}
             >
               <FiShoppingCart className="h-5 w-5 mr-2" />
               Shopping Cart

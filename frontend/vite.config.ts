@@ -3,11 +3,19 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig(({ mode }) => {
+  // Load env file based on `mode` in the current working directory.
+  const env = loadEnv(mode, process.cwd(), '')
+  
   const isProduction = mode === 'production';
   
   return {
     plugins: [react()],
-    base: isProduction ? '/static' : '/',
+    define: {
+      'import.meta.env.MODE': JSON.stringify(mode),
+      'import.meta.env.PROD': isProduction,
+      'import.meta.env.DEV': !isProduction
+    },
+    base: isProduction ? '/static/' : '/',
     publicDir: 'public',
     build: {
       outDir: 'dist',
