@@ -149,7 +149,7 @@ const Navigation: React.FC = () => {
                           Clear Cart
                         </button>
                         <button 
-                          className="flex-1 flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-tertiary-600 hover:bg-tertiary-700"
+                          className="flex-1 flex justify-center items-center px-4 py-2 border border-primary rounded-md shadow-sm text-sm font-medium text-white bg-tertiary-600 hover:bg-tertiary-700"
                         >
                           Checkout
                         </button>

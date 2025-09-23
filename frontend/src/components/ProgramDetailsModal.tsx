@@ -21,11 +21,11 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">{program.title}</h2>
+        <div className="sticky top-0 bg-white p-4 border-b border-secondary-200 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-primary-900">{program.title}</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            className="text-secondary-600 hover:text-primary-700 focus:outline-none"
             aria-label="Close modal"
           >
             <FiX className="h-6 w-6" />
@@ -44,16 +44,16 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
             
             <div>
               <div className="mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Program Overview</h3>
-                <p className="text-gray-700">
+                <h3 className="text-xl font-semibold text-primary-900 mb-2">Program Overview</h3>
+                <p className="text-secondary-800">
                   {program.longDescription || 'Detailed program description will be added here. This will include comprehensive information about the training methodology, what to expect, and the benefits of this program.'}
                 </p>
               </div>
               
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Program Details</h4>
-                  <ul className="space-y-2 text-gray-700">
+                <div className="p-4 bg-secondary-50 rounded-lg">
+                  <h4 className="font-medium text-primary-900 mb-2">Program Details</h4>
+                  <ul className="space-y-2 text-secondary-800">
                     <li>• Duration: {program.id} weeks</li>
                     <li>• Level: All levels</li>
                     <li>• Focus: Strength & Hypertrophy</li>
@@ -61,11 +61,11 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
                   </ul>
                 </div>
                 
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="text-2xl font-bold text-gray-900">${program.price.toFixed(2)}</span>
+                <div className="flex items-center justify-between pt-4 border-t border-secondary-200">
+                  <span className="text-2xl font-bold text-tertiary-700">${program.price.toFixed(2)}</span>
                   {isInCart ? (
                     <button 
-                      className="bg-green-100 text-green-700 font-medium py-2 px-6 rounded-lg cursor-not-allowed flex items-center gap-2"
+                      className="bg-secondary-200 text-primary-800 font-medium py-2 px-6 rounded-lg cursor-not-allowed flex items-center gap-2"
                       disabled
                     >
                       <FiCheck className="text-lg" />
@@ -73,7 +73,7 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
                     </button>
                   ) : (
                     <button 
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                      className="bg-tertiary-600 hover:bg-tertiary-700 text-white font-medium py-2 px-6 rounded-lg border border-primary transition-colors duration-200 flex items-center gap-2"
                       onClick={() => {
                         onClose();
                         const addToCartButton = document.querySelector(`[data-program-title="${program.title}"]`);

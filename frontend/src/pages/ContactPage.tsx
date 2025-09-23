@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaPhone, FaMapMarkerAlt, FaInstagram, FaYoutube, FaTiktok, FaFacebook } from 'react-icons/fa';
+import { FaYoutube, FaTiktok } from 'react-icons/fa';
 
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -34,34 +34,39 @@ const ContactPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Contact Form */}
+      <div className="space-y-12">
+        {/* Contact Form Section */}
         <div className="bg-secondary p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-primary mb-6">Send Us a Message</h2>
+          <p className="text-primary text-opacity-90 mb-8">
+            Have questions or want to learn more about our programs? Send us a message and we'll get back to you soon.
+          </p>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-primary mb-1">Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-tertiary-600 focus:ring-2 focus:ring-tertiary-500/50 text-primary transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-tertiary-500/30"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-tertiary-600 focus:ring-2 focus:ring-tertiary-500/50 text-primary transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-tertiary-500/30"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-primary mb-1">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-tertiary-600 focus:ring-2 focus:ring-tertiary-500/50 text-primary transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-tertiary-500/30"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-tertiary-600 focus:ring-2 focus:ring-tertiary-500/50 text-primary transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-tertiary-500/30"
+                  required
+                />
+              </div>
             </div>
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-primary mb-1">Message</label>
@@ -78,83 +83,107 @@ const ContactPage: React.FC = () => {
             <div>
               <button
                 type="submit"
-                className="bg-tertiary-600 text-white px-8 py-3 rounded-md hover:bg-tertiary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-300 font-medium"
+                className="w-full md:w-auto bg-tertiary-600 text-white px-8 py-3 rounded-md border border-primary hover:bg-tertiary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-300 font-medium"
               >
                 Send Message
               </button>
             </div>
           </form>
-        </div>
 
-        {/* Contact Info & Socials */}
-        <div className="space-y-8">
-          {/* Contact Info */}
-          <div className="bg-secondary p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-primary mb-6">Contact Information</h2>
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <FaPhone className="text-tertiary-600 mt-1 mr-3 flex-shrink-0" size={20} />
-                <div>
-                  <h3 className="font-medium text-primary">Phone</h3>
-                  <a href="tel:+1234567890" className="text-primary text-opacity-80 hover:text-opacity-100 transition-colors">
-                    (123) 456-7890
+          {/* Social Media & Content Links */}
+          <div className="mt-12">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+              {/* Social Media Section */}
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-primary mb-3">Follow Us on Social Media</h3>
+                <div className="flex justify-center space-x-6">
+                  <a 
+                    href="https://www.youtube.com/@brawnyoriginals" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-tertiary-600 transition-colors" 
+                    aria-label="YouTube"
+                  >
+                    <FaYoutube size={24} />
+                  </a>
+                  <a 
+                    href="https://www.tiktok.com/@brawny_originals" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-tertiary-600 transition-colors" 
+                    aria-label="TikTok"
+                  >
+                    <FaTiktok size={24} />
                   </a>
                 </div>
               </div>
-              <div className="flex items-start">
-                <FaMapMarkerAlt className="text-tertiary-600 mt-1 mr-3 flex-shrink-0" size={20} />
-                <div>
-                  <h3 className="font-medium text-primary">Location</h3>
-                  <p className="text-primary text-opacity-80">
-                    [Your Business Address Here]
-                  </p>
-                </div>
+              
+              {/* Vertical Divider - Hidden on mobile */}
+              <div className="hidden md:block h-12 w-px bg-gray-300"></div>
+              
+              {/* Explore Content Section */}
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-primary mb-3">Explore Our Content</h3>
+                <a 
+                  href="#latest-content" 
+                  className="inline-flex items-center text-tertiary-600 hover:text-tertiary-800 transition-colors font-medium"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('latest-content')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  View Latest Videos & Shorts
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          
+          </div>
+        </div>
+
+        {/* Latest Content Header */}
+        <div id="latest-content" className="text-center py-8">
+          <h2 className="text-3xl font-bold text-primary mb-3">Check Out Our Latest Content</h2>
+          <p className="text-primary text-opacity-90 max-w-2xl mx-auto">
+            Stay updated with our newest videos, shorts, and fitness tips.
+          </p>
+        </div>
+
+        {/* YouTube Video Section */}
+        <div className="bg-secondary p-6 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-primary mb-6">Latest YouTube Video</h2>
+          <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden mb-4">
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              [YouTube Video Embed]
+            </div>
+          </div>
+        </div>
+
+        {/* Shorts Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* YouTube Short */}
+          <div className="bg-secondary p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-bold text-primary mb-4">Latest Short</h3>
+            <div className="aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden mb-4">
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                [YouTube Short/Reel]
               </div>
             </div>
           </div>
 
-          {/* Social Media */}
-          <div className="bg-secondary p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-primary mb-6">Follow Us</h2>
-            <div className="flex space-x-4">
-              <a href="#" className="text-primary hover:text-tertiary-600 transition-colors" aria-label="Instagram">
-                <FaInstagram size={24} />
-              </a>
-              <a href="#" className="text-primary hover:text-tertiary-600 transition-colors" aria-label="YouTube">
-                <FaYoutube size={24} />
-              </a>
-              <a href="#" className="text-primary hover:text-tertiary-600 transition-colors" aria-label="TikTok">
-                <FaTiktok size={24} />
-              </a>
-              <a href="#" className="text-primary hover:text-tertiary-600 transition-colors" aria-label="Facebook">
-                <FaFacebook size={24} />
-              </a>
-            </div>
-          </div>
-
-          {/* Additional Resources */}
-          <div className="bg-secondary p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-primary mb-4">Additional Resources</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-primary mb-2">YouTube Channel</h3>
-                <p className="text-primary text-opacity-80 mb-2">Check out our latest training videos and tutorials.</p>
-                <a href="#" className="text-tertiary-600 hover:underline">
-                  [YouTube Channel Link]
-                </a>
-              </div>
-              <div>
-                <h3 className="font-medium text-primary mb-2">Training Programs</h3>
-                <p className="text-primary text-opacity-80 mb-2">Explore our customized training programs.</p>
-                <a href="/programs" className="text-tertiary-600 hover:underline">
-                  View Programs →
-                </a>
+          {/* TikTok */}
+          <div className="bg-secondary p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-bold text-primary mb-4">Latest TikTok</h3>
+            <div className="aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden mb-4">
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                [TikTok Embed]
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

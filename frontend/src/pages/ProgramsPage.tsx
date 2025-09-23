@@ -100,9 +100,9 @@ const ProgramsPage: React.FC = () => {
                   onClick={() => handleAddToCart(program)}
                   disabled={isInCart(program.title)}
                   data-program-title={program.title}
-                  className={`w-full flex items-center justify-center gap-2 ${
+                  className={`w-full flex items-center justify-center gap-2 border border-primary ${
                     isInCart(program.title)
-                      ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                      ? 'bg-green-100 text-green-700 cursor-not-allowed border-green-300' 
                       : 'bg-tertiary-600 hover:bg-tertiary-700 text-white'
                   } font-medium py-3 px-6 rounded-lg transition-colors duration-200`}
                 >
