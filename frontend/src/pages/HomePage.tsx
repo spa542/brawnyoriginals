@@ -15,50 +15,48 @@ const GALLERY_IMAGES = [
 
 const HomePage: React.FC = () => {
   return (
-    <div className="w-full flex flex-col min-h-screen">
-      {/* Header with solid background */}
-      <div className="w-full relative z-20 bg-secondary">
-        <div className="relative">
-          {/* Header content */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 text-center">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-primary">
-              <span>Brawny Originals</span>
-              </h1>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        {/* Container for carousel with max width and auto margins */}
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="w-full rounded-xl overflow-hidden shadow-2xl">
+    <div className="w-full flex flex-col min-h-screen bg-primary">
+      <div className="relative w-full flex-grow">
+        {/* Full viewport height carousel */}
+        <div className="relative w-full h-full">
+          <div className="w-full h-full bg-primary">
             <ImageCarousel imageFilenames={GALLERY_IMAGES} />
+            {/* Centered title - Moved up */}
+            {/* Dark overlay for better text contrast */}
+            <div className="absolute inset-0 bg-black bg-opacity-30 z-0" />
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none px-4" style={{ transform: 'translateY(-25%)' }}>
+              <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 bg-black bg-opacity-40 rounded-lg backdrop-blur-sm">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white text-center">
+                  Brawny Originals
+                </h1>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Subheader Section */}
-        <div className="w-full bg-white pt-4 pb-12 md:pt-6 md:pb-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Subheader Section - Overlaying carousel */}
+        <div className="absolute bottom-1/4 left-0 right-0 z-20 w-full px-4">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 bg-black bg-opacity-40 rounded-lg backdrop-blur-sm">
             <div className="text-center">
-              <p className="mt-6 max-w-2xl mx-auto text-xl text-primary">
+              <p className="text-base sm:text-lg md:text-xl text-white px-2">
                 Professional training programs and coaching designed to help you achieve your fitness goals, no matter your starting point.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+              <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
                 <Link
                   to="/programs"
-                  className="w-48 sm:w-56 inline-flex items-center justify-center px-6 py-4 border border-primary text-base font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 md:text-lg transition-colors duration-200"
+                  className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-3 sm:py-4 border border-primary text-sm sm:text-base font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 md:text-lg transition-colors duration-200"
                 >
                   Explore Programs
                 </Link>
                 <Link
                   to="/about"
-                  className="w-48 sm:w-56 inline-flex items-center justify-center px-6 py-4 border border-primary text-base font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 md:text-lg transition-colors duration-200"
+                  className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-3 sm:py-4 border border-primary text-sm sm:text-base font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 md:text-lg transition-colors duration-200"
                 >
                   About Us
                 </Link>
                 <Link
                   to="/contact"
-                  className="w-48 sm:w-56 inline-flex items-center justify-center px-6 py-4 border border-primary text-base font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 md:text-lg transition-colors duration-200"
+                  className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-3 sm:py-4 border border-primary text-sm sm:text-base font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 md:text-lg transition-colors duration-200"
                 >
                   Coaching
                 </Link>

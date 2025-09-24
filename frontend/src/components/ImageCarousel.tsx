@@ -22,7 +22,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ imageFilenames }) => {
 
   // Slick carousel settings
   const settings = {
-    dots: true,
+    dots: false,
     infinite: true,
     speed: 800,
     slidesToShow: 1,
@@ -64,31 +64,29 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ imageFilenames }) => {
   }
 
   return (
-    <div className="relative w-full">
-      <div style={{ paddingBottom: '56.25%' }}> {/* 16:9 Aspect Ratio */}
-        <div className="absolute inset-0">
-          <Slider {...settings} className="h-full">
-            {images.map((image, index) => (
-              <div key={`${image.name}-${index}`} className="h-full">
-                <div className="h-full w-full overflow-hidden">
-                  <img 
-                    src={image.src}
-                    alt={image.name || `Gym photo ${index + 1}`}
-                    className="w-full h-full object-cover rounded-lg"
-                    onError={(e) => {
-                      console.error('Failed to load image:', image.src);
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                    draggable={false}
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            ))}
-          </Slider>
-        </div>
-      </div>
+    <div className="w-full h-full overflow-hidden">
+      <Slider {...settings} className="h-full [&>.slick-list]:!m-0 [&>.slick-list]:!p-0">
+        {images.map((image, index) => (
+          <div key={`${image.name}-${index}`} className="h-full !flex items-stretch">
+            <div className="w-full">
+              <img 
+                src={image.src}
+                alt={image.name || `Gym photo ${index + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Failed to load image:', image.src);
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+                draggable={false}
+                loading={index === 0 ? 'eager' : 'lazy'}
+              />
+              {/* Dark overlay for better text contrast */}
+              <div className="absolute inset-0 bg-black bg-opacity-30" />
+            </div>
+          </div>
+        ))}
+      </Slider>
     </div>
   );
 };
