@@ -58,7 +58,7 @@ def create_app() -> FastAPI:
                 detail=exc.detail,
                 error=str(exc),
                 status_code=exc.status_code
-            ).dict()
+            ).model_dump()
         )
 
     @app.exception_handler(Exception)
@@ -72,15 +72,17 @@ def create_app() -> FastAPI:
                 detail="Internal server error",
                 error=str(exc),
                 status_code=500
-            ).dict()
+            ).model_dump()
         )
     
     # Include routers
     app.include_router(core_router.router)
     app.include_router(health_router.router, prefix="/api")
 
+    env = os.getenv("ENV")
+
     # Configure CORS in development
-    if os.getenv("ENV") == "development":
+    if env == "development":
         app.add_middleware(
             CORSMiddleware,
             allow_origins=["http://localhost:5173"],  # Vite default port
@@ -88,9 +90,7 @@ def create_app() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-    
-    # Mount static files in production
-    if os.getenv("ENV") == "production":
+    elif env == "production":  # Mount static files in production
         # Path to the frontend build directory
         frontend_path = Path(__file__).parent.parent.parent / "frontend" / "dist"
         
@@ -100,6 +100,8 @@ def create_app() -> FastAPI:
             StaticFiles(directory=str(frontend_path), html=True),
             name="static"
         )
+    else:
+        raise ValueError(f"Invalid environment set: {env}")
     
     return app
 

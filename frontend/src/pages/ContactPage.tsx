@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { FaYoutube, FaTiktok } from 'react-icons/fa';
+import YouTubeEmbed from '../components/YouTubeEmbed';
+import TikTokEmbed from '../components/TikTokEmbed';
 
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -154,33 +156,32 @@ const ContactPage: React.FC = () => {
         {/* YouTube Video Section */}
         <div className="bg-secondary p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-primary mb-6">Latest YouTube Video</h2>
-          <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden mb-4">
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              [YouTube Video Embed]
-            </div>
-          </div>
+          <YouTubeEmbed 
+            videoId="dQw4w9WgXcQ" 
+            title="Latest YouTube video"
+            className="mb-4"
+          />
         </div>
 
         {/* Shorts Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* YouTube Short */}
-          <div className="bg-secondary p-6 rounded-lg shadow-lg">
+          <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-[400px] mx-auto w-full">
             <h3 className="text-xl font-bold text-primary mb-4">Latest Short</h3>
-            <div className="aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden mb-4">
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                [YouTube Short/Reel]
-              </div>
-            </div>
+            <YouTubeEmbed 
+              videoId="dQw4w9WgXcQ" 
+              title="Latest YouTube Short"
+              isShort={true}
+            />
           </div>
 
           {/* TikTok */}
-          <div className="bg-secondary p-6 rounded-lg shadow-lg">
+          <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-[400px] mx-auto w-full">
             <h3 className="text-xl font-bold text-primary mb-4">Latest TikTok</h3>
-            <div className="aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden mb-4">
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                [TikTok Embed]
-              </div>
-            </div>
+            <TikTokEmbed 
+              videoId="7264255924498500910"
+              title="Latest TikTok Video"
+            />
           </div>
         </div>
       </div>

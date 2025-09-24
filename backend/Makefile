@@ -37,7 +37,7 @@ install: venv
 # Start the development server
 dev: install
 	@echo "Starting FastAPI development server..."
-	PYTHONPATH=. $(UVICORN) app.main:app --reload --host 0.0.0.0 --port 8000
+	ENV=development PYTHONPATH=. $(UVICORN) app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Build for production
 build: install

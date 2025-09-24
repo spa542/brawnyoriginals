@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 
-from app.controllers.core_controller import CoreController
-from app.models.core_model import HealthCheckResponse
+import app.controllers.health_controller as hc
+from app.models.health_model import HealthCheckResponse
+
 
 router = APIRouter()
-controller = CoreController()
+
 
 @router.get(
     "/health",
@@ -14,4 +15,4 @@ controller = CoreController()
 )
 async def health_check():
     """Health check endpoint"""
-    return controller.health_check()
+    return hc.health_check()
