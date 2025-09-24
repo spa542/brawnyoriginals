@@ -11,8 +11,9 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
 import uvicorn
 
-from app.routers import core_router, health_router
+from app.routers import core_router, health_router, utility_router
 from app.models.core_model import ErrorResponse
+from app.utilities.helpers import is_dev, is_prod, is_valid_environment
 
 
 def create_app() -> FastAPI:
@@ -25,10 +26,10 @@ def create_app() -> FastAPI:
     # Initialize FastAPI app
     app = FastAPI(
         title="Brawny Originals API",
-        description="Backend API and Frontend for Brawny Originals",
-        version="0.1.0",
-        docs_url="/api/docs",
-        openapi_url="/api/openapi.json"
+        description="API for Brawny Originals application",
+        version="1.0.0",
+        docs_url="/api/docs" if is_dev() else None,
+        redoc_url="/api/redoc" if is_dev() else None,
     )
     
     
@@ -44,7 +45,7 @@ def create_app() -> FastAPI:
                 detail="Validation error",
                 error=str(exc),
                 status_code=422
-            ).dict()
+            ).model_dump()
         )
 
     @app.exception_handler(HTTPException)
@@ -78,11 +79,14 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(core_router.router)
     app.include_router(health_router.router, prefix="/api")
+    app.include_router(utility_router.router, prefix="/api") 
 
-    env = os.getenv("ENV")
+    # Check that environmetn is set and valid
+    if not is_valid_environment():
+        raise ValueError(f"Invalid environment set: {os.getenv('ENV')}")
 
     # Configure CORS in development
-    if env == "development":
+    if is_dev():
         app.add_middleware(
             CORSMiddleware,
             allow_origins=["http://localhost:5173"],  # Vite default port
@@ -90,7 +94,8 @@ def create_app() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-    elif env == "production":  # Mount static files in production
+
+    if is_prod():  # Mount static files in production
         # Path to the frontend build directory
         frontend_path = Path(__file__).parent.parent.parent / "frontend" / "dist"
         
@@ -100,8 +105,6 @@ def create_app() -> FastAPI:
             StaticFiles(directory=str(frontend_path), html=True),
             name="static"
         )
-    else:
-        raise ValueError(f"Invalid environment set: {env}")
     
     return app
 
@@ -112,12 +115,11 @@ app = create_app()
 
 # This allows the app to be run directly with: python -m app.main
 if __name__ == "__main__":
-    env = os.getenv("ENV", "development")
-    reload = env == "development"
+    reload = is_dev()
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=reload,
-        workers=4 if env == "production" else 1
+        workers=4 if is_prod() else 1
     )

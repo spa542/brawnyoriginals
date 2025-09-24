@@ -1,6 +1,3 @@
-from fastapi import HTTPException, status
-from typing import Dict, Any
-
 from app.models.health_model import HealthCheckResponse
 
 

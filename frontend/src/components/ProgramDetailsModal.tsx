@@ -65,7 +65,7 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
                   <span className="text-2xl font-bold text-tertiary-700">${program.price.toFixed(2)}</span>
                   {isInCart ? (
                     <button 
-                      className="bg-secondary-200 text-primary-800 font-medium py-2 px-6 rounded-lg cursor-not-allowed flex items-center gap-2"
+                      className="flex items-center justify-center gap-2 border border-primary bg-green-100 text-green-700 cursor-not-allowed font-medium py-2 px-6 rounded-lg transition-colors duration-200"
                       disabled
                     >
                       <FiCheck className="text-lg" />

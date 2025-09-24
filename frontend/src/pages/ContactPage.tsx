@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { FaYoutube, FaTiktok } from 'react-icons/fa';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import TikTokEmbed from '../components/TikTokEmbed';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +11,7 @@ const ContactPage: React.FC = () => {
     email: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -18,16 +21,74 @@ const ContactPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    alert('Thank you for your message! I will get back to you soon.');
-    setFormData({ name: '', email: '', message: '' });
+    setIsSubmitting(true);
+    
+    try {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const response = await fetch(`${baseUrl}/api/contact/email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      await response.json();
+      
+      toast.success(
+        'Message sent successfully! \nWe\'ll get back to you soon.',
+        {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+      
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error(
+        'Sorry, we couldn\'t send your message. \nPlease try again later.',
+        {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: false,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        toastStyle={{ whiteSpace: 'pre-line' }}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl font-bold text-primary mb-4">Get In Touch</h1>
@@ -85,9 +146,12 @@ const ContactPage: React.FC = () => {
             <div>
               <button
                 type="submit"
-                className="w-full md:w-auto bg-tertiary-600 text-white px-8 py-3 rounded-md border border-primary hover:bg-tertiary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-300 font-medium"
+                disabled={isSubmitting}
+                className={`w-full md:w-auto bg-tertiary-600 text-white px-8 py-3 rounded-md border border-primary hover:bg-tertiary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-300 font-medium ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                Send Message
+                {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
             </div>
           </form>

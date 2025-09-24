@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 import app.controllers.utility_controller as uc
-from app.models.utility_model import UtilityVideoResponse
+from app.models.utility_model import VideoResponse, SendEmailResponse, SendEmailRequest
 
 
 router = APIRouter()
@@ -9,32 +9,40 @@ router = APIRouter()
 
 @router.get(
     "/latest/youtube",
-    response_model=UtilityVideoResponse,
+    response_model=VideoResponse,
     status_code=200,
     tags=["Utility"]
 )
 async def retrieve_latest_youtube_video():
-    """Health check endpoint"""
     return None
 
 
 @router.get(
     "/latest/short",
-    response_model=UtilityVideoResponse,
+    response_model=VideoResponse,
     status_code=200,
     tags=["Utility"]
 )
 async def retrieve_latest_youtube_short():
-    """Health check endpoint"""
     return None
 
 
 @router.get(
     "/latest/tiktok",
-    response_model=UtilityVideoResponse,
+    response_model=VideoResponse,
     status_code=200,
     tags=["Utility"]
 )
 async def retrieve_latest_tiktok():
-    """Health check endpoint"""
     return None
+
+
+@router.post(
+    "/contact/email",
+    response_model=SendEmailResponse,
+    status_code=200,
+    tags=["Utility"]
+)
+async def send_email(request: SendEmailRequest):
+    """Send email to the specified email address"""
+    return uc.send_email(**request.model_dump())
