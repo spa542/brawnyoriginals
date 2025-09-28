@@ -2,7 +2,7 @@ import os
 import requests
 from typing import Dict, Any
 
-from app.utilities.helpers import is_dev
+from app.utilities.helpers import is_dev, get_cfg
 from app.models.utility_model import SendEmailResponse
 
 
@@ -21,17 +21,14 @@ def send_email(name: str, email: str, message: str) -> Dict[str, Any]:
     Raises:
         ValueError: If there's an error sending the email
     """
-    # TODO: Update this based on environments using vault later
-    if is_dev():
-        uri = "https://api.mailgun.net/v3/sandbox643e4f56e5e64025bb465156f01fe8aa.mailgun.org/messages"
-        email_from = "Mailgun Sandbox <postmaster@sandbox643e4f56e5e64025bb465156f01fe8aa.mailgun.org>"
-        email_to = "ryan11291129@gmail.com"
-    else:
-        uri = "https://api.mailgun.net/v3/sandbox643e4f56e5e64025bb465156f01fe8aa.mailgun.org/messages" 
-        email_from = "Mailgun Sandbox <postmaster@sandbox643e4f56e5e64025bb465156f01fe8aa.mailgun.org>"
-        email_to = "ryan11291129@gmail.com"
+    # Get config file
+    cfg = get_cfg()
+    # Setup email variables
+    url = cfg.get("MAILGUN", "url")
+    email_from = ("Mailgun Sandbox" if is_dev() else "Mailgun Production") + f" <{cfg.get('MAILGUN', 'from_uri')}>"
+    email_to = cfg.get("MAILGUN", "contact_email")
 
-    # TODO Update to use vault later
+    # TODO Update to use doppler later
     auth = ("api", os.getenv("MAILGUN_API_KEY"))
     if not auth[1]:
         raise ValueError("MAILGUN_API_KEY not found")
@@ -44,7 +41,7 @@ def send_email(name: str, email: str, message: str) -> Dict[str, Any]:
     }
 
     # Send the email
-    response = requests.post(uri, auth=auth, data=data, timeout=10)
+    response = requests.post(url, auth=auth, data=data, timeout=10)
     response.raise_for_status()
     
     return SendEmailResponse(
