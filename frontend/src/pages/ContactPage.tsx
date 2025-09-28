@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaYoutube, FaTiktok } from 'react-icons/fa';
+import { FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import TikTokEmbed from '../components/TikTokEmbed';
 import { toast, ToastContainer } from 'react-toastify';
@@ -21,8 +21,9 @@ const ContactPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     setIsSubmitting(true);
     
     try {
@@ -53,8 +54,6 @@ const ContactPage: React.FC = () => {
           progress: undefined,
         }
       );
-      
-      setFormData({ name: '', email: '', message: '' });
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error(
@@ -70,6 +69,9 @@ const ContactPage: React.FC = () => {
         }
       );
     } finally {
+      // Always clear the form, regardless of success or failure
+      setFormData({ name: '', email: '', message: '' });
+      form.reset();
       setIsSubmitting(false);
     }
   };
@@ -181,6 +183,15 @@ const ContactPage: React.FC = () => {
                   >
                     <FaTiktok size={24} />
                   </a>
+                  <a 
+                    href="https://www.instagram.com/brawny_originals/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-tertiary-600 transition-colors" 
+                    aria-label="Instagram"
+                  >
+                    <FaInstagram size={24} />
+                  </a>
                 </div>
               </div>
               
@@ -210,9 +221,9 @@ const ContactPage: React.FC = () => {
         </div>
 
         {/* Latest Content Header */}
-        <div id="latest-content" className="text-center py-8">
-          <h2 className="text-3xl font-bold text-primary mb-3">Check Out Our Latest Content</h2>
-          <p className="text-primary text-opacity-90 max-w-2xl mx-auto">
+        <div id="latest-content" className="text-center pt-4 pb-2">
+          <h2 className="text-3xl font-bold text-primary mb-2">Check Out Our Latest Content</h2>
+          <p className="text-primary text-opacity-90 max-w-2xl mx-auto mb-4">
             Stay updated with our newest videos, shorts, and fitness tips.
           </p>
         </div>
@@ -223,12 +234,30 @@ const ContactPage: React.FC = () => {
           <YouTubeEmbed 
             videoId="dQw4w9WgXcQ" 
             title="Latest YouTube video"
-            className="mb-4"
+            className="mb-6"
           />
+          <div className="text-center mb-6">
+            <button
+              onClick={() => {
+                const element = document.getElementById('shorts-section');
+                if (element) {
+                  const yOffset = -40; // Adjust this value to change how much above the element to scroll
+                  const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }}
+              className="inline-flex items-center text-tertiary-600 hover:text-tertiary-800 transition-colors font-medium bg-secondary px-6 py-2 rounded-md hover:bg-gray-100"
+            >
+              View More Content
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Shorts Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="shorts-section" className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* YouTube Short */}
           <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-[400px] mx-auto w-full">
             <h3 className="text-xl font-bold text-primary mb-4">Latest Short</h3>
