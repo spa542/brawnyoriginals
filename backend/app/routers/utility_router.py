@@ -14,7 +14,7 @@ router = APIRouter()
     tags=["Utility"]
 )
 async def retrieve_latest_youtube_video():
-    return None
+    return uc.scrape_latest_youtube_video()
 
 
 @router.get(
@@ -24,7 +24,7 @@ async def retrieve_latest_youtube_video():
     tags=["Utility"]
 )
 async def retrieve_latest_youtube_short():
-    return None
+    return uc.scrape_latest_youtube_short()
 
 
 @router.get(
@@ -34,7 +34,7 @@ async def retrieve_latest_youtube_short():
     tags=["Utility"]
 )
 async def retrieve_latest_tiktok():
-    return None
+    return uc.scrape_latest_tiktok_video()
 
 
 @router.post(

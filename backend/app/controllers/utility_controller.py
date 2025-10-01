@@ -3,7 +3,46 @@ import requests
 from typing import Dict, Any
 
 from app.utilities.helpers import is_dev, get_cfg
-from app.models.utility_model import SendEmailResponse
+from app.models.utility_model import SendEmailResponse, VideoResponse
+
+
+def scrape_latest_youtube_video() -> Dict[str, Any]:
+    """
+    Scrape the latest video from the specified URL.
+    
+    Returns:
+        Dict containing video ID and title
+    """
+    # TODO Implement this logic with youtube data api later
+    return VideoResponse(
+        video_id="ipNst4g4_h0",
+    )
+
+
+def scrape_latest_youtube_short() -> Dict[str, Any]:
+    """
+    Scrape the latest short from the specified URL.
+    
+    Returns:
+        Dict containing video ID and title
+    """
+    # TODO Implement this logic with youtube data api later
+    return VideoResponse(
+        video_id="oDeAdGUyIm4",
+    )
+
+
+def scrape_latest_tiktok_video() -> Dict[str, Any]:
+    """
+    Scrape the latest video from the specified URL.
+    
+    Returns:
+        Dict containing video ID and title
+    """
+    # NOTE: Fow now, TikTok public API is not available and web scrapers are unreliable. Hardcoding for now 
+    return VideoResponse(
+        video_id="7556011260790328606",
+    )
 
 
 def send_email(name: str, email: str, message: str) -> Dict[str, Any]:

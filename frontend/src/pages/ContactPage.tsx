@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import TikTokEmbed from '../components/TikTokEmbed';
+import VideoLoader from '../components/VideoLoader';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -231,11 +232,15 @@ const ContactPage: React.FC = () => {
         {/* YouTube Video Section */}
         <div className="bg-secondary p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-primary mb-6">Latest YouTube Video</h2>
-          <YouTubeEmbed 
-            videoId="dQw4w9WgXcQ" 
-            title="Latest YouTube video"
-            className="mb-6"
-          />
+          <VideoLoader type="youtube">
+            {({ videoId }) => (
+              <YouTubeEmbed 
+                videoId={videoId}
+                title="Latest YouTube video"
+                className="mb-6"
+              />
+            )}
+          </VideoLoader>
           <div className="text-center mb-6">
             <button
               onClick={() => {
@@ -261,20 +266,28 @@ const ContactPage: React.FC = () => {
           {/* YouTube Short */}
           <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-[400px] mx-auto w-full">
             <h3 className="text-xl font-bold text-primary mb-4">Latest Short</h3>
-            <YouTubeEmbed 
-              videoId="dQw4w9WgXcQ" 
-              title="Latest YouTube Short"
-              isShort={true}
-            />
+            <VideoLoader type="short">
+              {({ videoId }) => (
+                <YouTubeEmbed 
+                  videoId={videoId}
+                  title="Latest YouTube Short"
+                  isShort={true}
+                />
+              )}
+            </VideoLoader>
           </div>
 
           {/* TikTok */}
           <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-[400px] mx-auto w-full">
             <h3 className="text-xl font-bold text-primary mb-4">Latest TikTok</h3>
-            <TikTokEmbed 
-              videoId="7264255924498500910"
-              title="Latest TikTok Video"
-            />
+            <VideoLoader type="tiktok">
+              {({ videoId }) => (
+                <TikTokEmbed 
+                  videoId={videoId}
+                  title="Latest TikTok Video"
+                />
+              )}
+            </VideoLoader>
           </div>
         </div>
       </div>

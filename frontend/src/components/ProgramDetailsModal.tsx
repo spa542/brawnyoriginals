@@ -1,5 +1,6 @@
 import React from 'react';
-import { FiX, FiPlus, FiCheck } from 'react-icons/fi';
+import { FiX } from 'react-icons/fi';
+import AddToCartButton from './AddToCartButton';
 
 interface ProgramDetailsModalProps {
   isOpen: boolean;
@@ -13,9 +14,10 @@ interface ProgramDetailsModalProps {
     price: number;
   } | null;
   isInCart: boolean;
+  onAddToCart: (item: any) => void;
 }
 
-const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClose, program, isInCart }) => {
+const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClose, program, isInCart, onAddToCart }) => {
   if (!isOpen || !program) return null;
 
   return (
@@ -63,29 +65,22 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
                 
                 <div className="flex items-center justify-between pt-4 border-t border-secondary-200">
                   <span className="text-2xl font-bold text-tertiary-700">${program.price.toFixed(2)}</span>
-                  {isInCart ? (
-                    <button 
-                      className="flex items-center justify-center gap-2 border border-primary bg-green-100 text-green-700 cursor-not-allowed font-medium py-2 px-6 rounded-lg transition-colors duration-200"
-                      disabled
-                    >
-                      <FiCheck className="text-lg" />
-                      Added to Cart
-                    </button>
-                  ) : (
-                    <button 
-                      className="bg-tertiary-600 hover:bg-tertiary-700 text-white font-medium py-2 px-6 rounded-lg border border-primary transition-colors duration-200 flex items-center gap-2"
-                      onClick={() => {
-                        onClose();
-                        const addToCartButton = document.querySelector(`[data-program-title="${program.title}"]`);
-                        if (addToCartButton) {
-                          (addToCartButton as HTMLElement).click();
-                        }
-                      }}
-                    >
-                      <FiPlus className="text-lg" />
-                      Add to Cart
-                    </button>
-                  )}
+                  <AddToCartButton 
+                    isInCart={isInCart}
+                    onClick={() => {
+                      onAddToCart({
+                        title: program.title,
+                        duration: program.id,
+                        description: program.description,
+                        image: program.image,
+                        price: program.price
+                      });
+                      onClose();
+                    }}
+                    dataTestId={`modal-add-to-cart-${program.id}`}
+                    variant="modal"
+                    comingSoon={true}
+                  />
                 </div>
               </div>
             </div>

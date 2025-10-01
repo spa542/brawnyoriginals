@@ -13,7 +13,6 @@ class SendEmailRequest(BaseModel):
 class VideoResponse(BaseModel):
     """Response model for getting latest videos endpoints"""
     video_id: str
-    title: str
 
 
 class SendEmailResponse(BaseModel):
