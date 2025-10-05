@@ -1,12 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 # Request models
+
 class SendEmailRequest(BaseModel):
     """Request model for sending email endpoints""" 
     name: str
-    email: str
+    email: EmailStr
     message: str
+    g_recaptcha_response: str 
+
 
 # Response models
 

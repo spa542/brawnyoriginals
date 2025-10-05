@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import TikTokEmbed from '../components/TikTokEmbed';
 import VideoLoader from '../components/VideoLoader';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ReCAPTCHA from '../components/ReCAPTCHA';
 
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -13,18 +14,26 @@ const ContactPage: React.FC = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState('');
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const handleRecaptchaVerify = useCallback((token: string) => {
+    setRecaptchaToken(token);
+    setRecaptchaReady(true);
+    
+    // If form was already submitted but waiting for reCAPTCHA, submit now
+    if (formSubmitted) {
+      handleFormSubmission();
+    }
+  }, [formSubmitted]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
+  const handleFormSubmission = async () => {
+    if (!recaptchaReady) {
+      setFormSubmitted(true);
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -34,7 +43,10 @@ const ContactPage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          g_recaptcha_response: recaptchaToken
+        }),
       });
       
       if (!response.ok) {
@@ -43,6 +55,7 @@ const ContactPage: React.FC = () => {
 
       await response.json();
       
+      // Show success message
       toast.success(
         'Message sent successfully! \nWe\'ll get back to you soon.',
         {
@@ -55,6 +68,12 @@ const ContactPage: React.FC = () => {
           progress: undefined,
         }
       );
+      
+      // Reset form and reCAPTCHA
+      setFormData({ name: '', email: '', message: '' });
+      setRecaptchaToken('');
+      setRecaptchaReady(false);
+      setFormSubmitted(false);
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error(
@@ -70,11 +89,21 @@ const ContactPage: React.FC = () => {
         }
       );
     } finally {
-      // Always clear the form, regardless of success or failure
-      setFormData({ name: '', email: '', message: '' });
-      form.reset();
       setIsSubmitting(false);
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleFormSubmission();
   };
 
   return (
@@ -140,35 +169,42 @@ const ContactPage: React.FC = () => {
                 id="message"
                 name="message"
                 rows={4}
-                value={formData.message}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-tertiary-600 focus:ring-2 focus:ring-tertiary-500/50 text-primary transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-tertiary-500/30"
                 required
               />
             </div>
-            <div>
+            <div className="space-y-4">
+              <div className="text-xs text-gray-500">
+                This site is protected by reCAPTCHA and the Google
+                <a href="https://policies.google.com/privacy" className="text-tertiary-600 hover:underline ml-1">Privacy Policy</a> and
+                <a href="https://policies.google.com/terms" className="text-tertiary-600 hover:underline ml-1">Terms of Service</a> apply.
+              </div>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !recaptchaReady}
                 className={`w-full md:w-auto bg-tertiary-600 text-white px-8 py-3 rounded-md border border-primary hover:bg-tertiary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-300 font-medium ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : !recaptchaReady ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
+              <ReCAPTCHA 
+                sitekey="6Ldh-dorAAAAAG7kBeNcDUsLM5PtgfZPip2f9jwH" 
+                action="contact_form_submit"
+                onVerify={handleRecaptchaVerify}
+              />
             </div>
           </form>
 
           {/* Social Media & Content Links */}
           <div className="mt-12">
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-              {/* Social Media Section */}
               <div className="text-center">
                 <h3 className="text-lg font-medium text-primary mb-3">Follow Us on Social Media</h3>
                 <div className="flex justify-center space-x-6">
                   <a 
                     href="https://www.youtube.com/@brawnyoriginals" 
-                    target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:text-tertiary-600 transition-colors" 
                     aria-label="YouTube"

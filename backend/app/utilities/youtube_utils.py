@@ -1,0 +1,266 @@
+import os
+from typing import Dict, Optional, List
+import httpx
+from fastapi import HTTPException, status
+
+from app.utilities.logger import get_logger
+
+
+# YouTube Data API v3 configuration
+YOUTUBE_API_BASE_URL = "https://www.googleapis.com/youtube/v3"
+CHANNEL_NAME = "brawnyoriginals"
+
+
+async def get_channel_id(channel_name: str = CHANNEL_NAME) -> Optional[str]:
+    """
+    Get YouTube channel ID from channel name using YouTube Data API v3.
+    
+    Args:
+        channel_name: The name of the YouTube channel
+        
+    Returns:
+        Channel ID if found, None otherwise
+        
+    Raises:
+        HTTPException: If there's an error with the YouTube API request
+    """
+    logger = get_logger(f"{__name__}.get_channel_id")
+    logger.debug(f"Looking up channel ID for: {channel_name}")
+    
+    try:
+        api_key = os.getenv("YOUTUBE_API_KEY")
+        if not api_key:
+            logger.error("YOUTUBE_API_KEY is not set in environment variables")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Server configuration error: Missing YouTube API key"
+            )
+            
+        async with httpx.AsyncClient() as client:
+            url = f"{YOUTUBE_API_BASE_URL}/search"
+            params = {
+                "part": "snippet",
+                "q": channel_name,
+                "type": "channel",
+                "key": api_key,
+                "maxResults": 1
+            }
+            
+            logger.debug(f"Making request to: {url}")
+            logger.debug(f"Request params: { {k: v for k, v in params.items() if k != 'key'} }")
+            
+            response = await client.get(url, params=params, timeout=15)
+            
+            # Log response status and headers for debugging
+            logger.debug(f"Response status: {response.status_code}")
+            logger.debug(f"Response headers: {dict(response.headers)}")
+            
+            # Get response text before raising for status to see error details
+            response_text = response.text
+            response.raise_for_status()
+            
+            data = response.json()
+            logger.debug(f"Response data: {data}")
+            
+            if data.get("items"):
+                channel_id = data["items"][0]["snippet"]["channelId"]
+                logger.debug(f"Found channel ID: {channel_id}")
+                return channel_id
+                
+            logger.warning(f"No channel found for: {channel_name}")
+            return None
+            
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Failed to fetch channel ID: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch channel information from YouTube"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error getting channel ID: {str(e)}", exc_info=True)
+        raise
+
+
+async def get_latest_videos(channel_id: str, is_short: bool = False) -> Optional[Dict]:
+    """
+    Get the latest video or short from a YouTube channel using YouTube Data API v3.
+    
+    Args:
+        channel_id: YouTube channel ID
+        is_short: Whether to filter for YouTube Shorts (videos < 60 seconds)
+        
+    Returns:
+        Dictionary with video ID if found, None otherwise
+        
+    Raises:
+        HTTPException: If there's an error with the YouTube API request
+    """
+    logger = get_logger(f"{__name__}.get_latest_videos")
+    logger.debug(f"Fetching latest {'short' if is_short else 'video'} for channel: {channel_id}")
+    
+    api_key = os.getenv("YOUTUBE_API_KEY")
+    if not api_key:
+        logger.error("YOUTUBE_API_KEY is not set in environment variables")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server configuration error: Missing YouTube API key"
+        )
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # Get channel uploads playlist ID
+            # Get channel uploads playlist ID
+            channel_response = await client.get(
+                f"{YOUTUBE_API_BASE_URL}/channels",
+                params={
+                    "part": "contentDetails",
+                    "id": channel_id,
+                    "key": api_key
+                },
+                timeout=15
+            )
+            channel_response.raise_for_status()
+            channel_data = channel_response.json()
+            
+            if not channel_data.get("items"):
+                return None
+                
+            uploads_playlist_id = channel_data["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+            
+            # Get multiple recent videos from the uploads playlist
+            videos_response = await client.get(
+                f"{YOUTUBE_API_BASE_URL}/playlistItems",
+                params={
+                    "part": "contentDetails",
+                    "playlistId": uploads_playlist_id,
+                    "key": api_key,
+                    "maxResults": 50  # Get enough videos to find both a short and regular video
+                },
+                timeout=15
+            )
+            videos_response.raise_for_status()
+            videos_data = videos_response.json()
+            
+            if not videos_data.get("items"):
+                return None
+            
+            # Get video IDs in batches of 50 (YouTube API limit)
+            video_ids = [item["contentDetails"]["videoId"] for item in videos_data["items"]]
+            
+            # Get video details in a single batch request
+            video_response = await client.get(
+                f"{YOUTUBE_API_BASE_URL}/videos",
+                params={
+                    "part": "contentDetails,status",
+                    "id": ",".join(video_ids),
+                    "key": api_key
+                },
+                timeout=15
+            )
+            video_response.raise_for_status()
+            video_details = video_response.json()
+            
+            if not video_details.get("items"):
+                logger.warning("No video details found for any videos")
+                return None
+            
+            # Process videos in order until we find the first matching video
+            for video_info in video_details["items"]:
+                # Skip unplayable videos
+                if video_info.get("status", {}).get("privacyStatus") != "public":
+                    continue
+                    
+                duration = video_info["contentDetails"]["duration"]
+                video_id = video_info["id"]
+                
+                # Check if this is a short (less than 60 seconds)
+                is_video_short = "M" not in duration and "H" not in duration and "S" in duration
+                
+                # If we found a video of the requested type, return it
+                if is_short == is_video_short:
+                    logger.debug(f"Found matching {'short' if is_short else 'regular'} video: {video_id}")
+                    return {"id": video_id, "is_short": is_video_short}
+            
+            logger.debug(f"No {'short' if is_short else 'regular'} videos found in the first {len(video_ids)} videos")
+            return None
+        logger.error(f"YouTube API error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch videos from YouTube"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error fetching videos: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while fetching videos"
+        )
+
+
+async def get_latest_video() -> Dict:
+    """
+    Get the latest regular video from the channel using YouTube Data API v3.
+    
+    Returns:
+        Dictionary containing video details
+        
+    Raises:
+        HTTPException: If channel not found or no videos available
+    """
+    logger = get_logger(f"{__name__}.get_latest_video")
+    logger.info("Fetching latest regular video")
+    
+    channel_id = await get_channel_id()
+    if not channel_id:
+        logger.warning("YouTube channel not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="YouTube channel not found"
+        )
+    
+    logger.debug(f"Found channel ID: {channel_id}, fetching latest video")
+    video = await get_latest_videos(channel_id, is_short=False)
+    
+    if not video:
+        logger.warning("No regular videos found for channel")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No videos found"
+        )
+    
+    logger.debug(f"Found video with ID: {video.get('id')}")
+    return video
+
+
+async def get_latest_short() -> Dict:
+    """
+    Get the latest short from the channel using YouTube Data API v3.
+    
+    Returns:
+        Dictionary containing short video details
+        
+    Raises:
+        HTTPException: If channel not found or no shorts available
+    """
+    logger = get_logger(f"{__name__}.get_latest_short")
+    logger.info("Fetching latest short video")
+    
+    channel_id = await get_channel_id()
+    if not channel_id:
+        logger.warning("YouTube channel not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="YouTube channel not found"
+        )
+    
+    logger.debug(f"Found channel ID: {channel_id}, fetching latest short")
+    video = await get_latest_videos(channel_id, is_short=True)
+    
+    if not video:
+        logger.warning("No short videos found for channel")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No shorts found"
+        )
+    
+    logger.debug(f"Found short with ID: {video.get('id')}")
+    return video

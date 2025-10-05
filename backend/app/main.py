@@ -3,6 +3,7 @@ Main FastAPI application setup and configuration.
 """
 import os
 from pathlib import Path
+import logging
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -14,6 +15,7 @@ import uvicorn
 from app.routers import core_router, health_router, utility_router
 from app.models.core_model import ErrorResponse
 from app.utilities.helpers import is_dev, is_prod, is_valid_environment
+from app.utilities.logger import init_logger
 
 
 def create_app() -> FastAPI:
@@ -23,6 +25,10 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: Configured FastAPI application instance
     """
+    # Initialize logger
+    log_level = logging.DEBUG if is_dev() else logging.INFO
+    init_logger(log_level=log_level)
+    
     # Initialize FastAPI app
     app = FastAPI(
         title="Brawny Originals API",
