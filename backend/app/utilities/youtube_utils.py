@@ -109,7 +109,6 @@ async def get_latest_videos(channel_id: str, is_short: bool = False) -> Optional
     try:
         async with httpx.AsyncClient() as client:
             # Get channel uploads playlist ID
-            # Get channel uploads playlist ID
             channel_response = await client.get(
                 f"{YOUTUBE_API_BASE_URL}/channels",
                 params={
@@ -182,12 +181,8 @@ async def get_latest_videos(channel_id: str, is_short: bool = False) -> Optional
                     return {"id": video_id, "is_short": is_video_short}
             
             logger.debug(f"No {'short' if is_short else 'regular'} videos found in the first {len(video_ids)} videos")
+
             return None
-        logger.error(f"YouTube API error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch videos from YouTube"
-        )
     except Exception as e:
         logger.error(f"Unexpected error fetching videos: {str(e)}", exc_info=True)
         raise HTTPException(
