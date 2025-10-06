@@ -55,8 +55,6 @@ async def get_channel_id(channel_name: str = CHANNEL_NAME) -> Optional[str]:
             logger.debug(f"Response status: {response.status_code}")
             logger.debug(f"Response headers: {dict(response.headers)}")
             
-            # Get response text before raising for status to see error details
-            response_text = response.text
             response.raise_for_status()
             
             data = response.json()
