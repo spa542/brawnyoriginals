@@ -8,6 +8,8 @@ from app.utilities.helpers import is_dev, get_cfg
 from app.models.utility_model import SendEmailResponse, VideoResponse
 from app.utilities.recaptcha import verify_recaptcha_token
 from app.utilities.logger import get_logger
+from app.utilities.doppler_utils import get_doppler_secret
+from app.utilities.youtube_utils import get_latest_short, get_latest_video
 
 
 async def scrape_latest_youtube_video() -> VideoResponse:
@@ -24,7 +26,6 @@ async def scrape_latest_youtube_video() -> VideoResponse:
     logger.info("Fetching latest YouTube video")
     
     try:
-        from app.utilities.youtube_utils import get_latest_video
         video = await get_latest_video()
         
         if not video:
@@ -61,7 +62,6 @@ async def scrape_latest_youtube_short() -> VideoResponse:
     logger.info("Fetching latest YouTube short")
     
     try:
-        from app.utilities.youtube_utils import get_latest_short
         video = await get_latest_short()
         
         if not video:
@@ -148,10 +148,11 @@ async def send_email(name: str, email: str, message: str, g_recaptcha_response: 
     email_from = ("Mailgun Sandbox" if is_dev() else "Mailgun Production") + f" <{cfg.get('MAILGUN', 'from_uri')}>"
     email_to = cfg.get("MAILGUN", "contact_email")
 
-    # TODO Update to use doppler later
-    auth = ("api", os.getenv("MAILGUN_API_KEY"))
-    if not auth[1]:
-        logger.error("MAILGUN_API_KEY environment variable not set")
+    try:
+        mailgun_api_key = await get_doppler_secret("MAILGUN_API_KEY")
+        auth = ("api", mailgun_api_key)
+    except Exception as e:
+        logger.error(f"Failed to get Mailgun API key from Doppler: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Email service configuration error"

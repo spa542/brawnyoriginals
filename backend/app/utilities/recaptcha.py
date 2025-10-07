@@ -1,8 +1,10 @@
-import os
 import logging
 import httpx
+
 from fastapi import HTTPException
+
 from app.utilities.logger import get_logger
+from app.utilities.doppler_utils import get_doppler_secret
 
 
 RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
@@ -30,10 +32,10 @@ async def verify_recaptcha_token(token: str) -> bool:
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to initialize custom logger: {e}")
     
-    RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
-    
-    if not RECAPTCHA_SECRET_KEY:
-        logger.error("reCAPTCHA secret key not configured")
+    try:
+        RECAPTCHA_SECRET_KEY = await get_doppler_secret("CAPTCHA_SECRET_KEY")
+    except Exception as e:
+        logger.error(f"Failed to get reCAPTCHA secret key from Doppler: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Server configuration error: reCAPTCHA secret key not configured"

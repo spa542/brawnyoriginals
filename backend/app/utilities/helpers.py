@@ -1,5 +1,6 @@
 import os
 from configparser import ConfigParser
+from pathlib import Path
 
 
 def is_dev() -> bool:
@@ -25,6 +26,9 @@ def get_cfg_name() -> str:
 def get_cfg() -> ConfigParser:
     """Get the configuration parser"""
     cfg = ConfigParser()
-    # TODO make sure this path works anywhere 
-    cfg.read(f"app/conf/{get_cfg_name()}.ini")
+    # Get the directory where this file is located
+    current_dir = Path(__file__).parent
+    # Navigate to the conf directory and read the config file
+    config_path = current_dir.parent / "conf" / f"{get_cfg_name()}.ini"
+    cfg.read(config_path)
     return cfg

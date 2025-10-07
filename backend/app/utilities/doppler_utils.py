@@ -1,127 +1,143 @@
 import os
+import time
+from typing import Dict, Optional
+import httpx
+
 import requests
-from typing import Optional
+from fastapi import HTTPException, status
 
-from app.utilities.helpers import get_cfg
 from app.utilities.logger import get_logger
+from app.utilities.helpers import get_cfg
 
 
-# Module-level instance for singleton pattern
-_instance = None
-
-
-def _get_doppler_client(api_key: Optional[str] = None) -> 'DopplerClient':
+class DopplerSecrets:
     """
-    Get the singleton instance of DopplerClient.
-    
-    Args:
-        api_key: Optional API key. If not provided, will be read from environment.
-                Only used on first call.
-                
-    Returns:
-        DopplerClient: The singleton instance
+    Singleton class to manage Doppler secrets with in-memory caching.
+    Automatically refreshes secrets when the cache expires.
     """
-    global _instance
-    if _instance is None:
-        _instance = DopplerClient(api_key)
-    return _instance
+    _instance: Optional['DopplerSecrets'] = None
+    _secrets: Dict[str, str] = {}
+    _last_fetch_time: float = 0
+    # _cache_ttl: int = 86400  # 24 hour TTL
+    _cache_ttl: int = 60  # 1 minute TTL
 
+    def __init__(self):
+        if self._instance is not None:
+            raise RuntimeError("Use get_doppler_client() instead")
+        self._initialize()
 
-class DopplerClient:
-    """
-    Client for interacting with the Doppler API to fetch secrets.
-    Should be instantiated through get_doppler_client().
-    """
-    
-    BASE_URL = "https://api.doppler.com/v3"
-    
-    def __init__(self, api_key: Optional[str] = None) -> None:
-        """
-        Initialize the Doppler client with an optional API key.
-        If no API key is provided, it will be read from the DOPPLER_API_KEY environment variable.
-        
-        Args:
-            api_key: The Doppler API key. Defaults to None.
-            
-        Raises:
-            ValueError: If no API key is provided and DOPPLER_API_KEY is not set.
-        """
+    @classmethod
+    def get_instance(cls) -> 'DopplerSecrets':
+        """Get or create the singleton instance"""
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+            cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
         self._logger = get_logger(__name__)
-        self._logger.debug("Initializing Doppler client")
+        self.doppler_api_key = os.getenv("DOPPLER_API_KEY")
         
-        self.api_key = api_key or os.getenv("DOPPLER_API_KEY")
-        if not self.api_key:
-            error_msg = "No API key provided and DOPPLER_API_KEY environment variable is not set"
+        if not self.doppler_api_key:
+            error_msg = "DOPPLER_API_KEY environment variable is not set"
             self._logger.error(error_msg)
             raise ValueError(error_msg)
         
-        # Get project and config from the existing config system
+        # Get config from config file
         cfg = get_cfg()
-        self.project = cfg.get("DOPPLER", "project", fallback=None)
-        self.config = cfg.get("DOPPLER", "config", fallback=os.getenv("ENV", "dev"))
+        
+        try:
+            self.project = cfg.get("DOPPLER", "project")
+            self.config = cfg.get("DOPPLER", "config")
+        except Exception as e:
+            self._logger.error(f"Failed to load Doppler config: {str(e)}")
+            raise ValueError("Invalid Doppler configuration in config file") from e
         
         self._logger.debug(
             "Doppler client initialized",
             extra={"project": self.project, "config": self.config}
         )
-    
-    def get_secret(self, secret_name: str) -> str:
+
+    async def get_secret(self, secret_name: str) -> str:
         """
-        Retrieve a secret from Doppler.
+        Get a secret from Doppler with caching.
         
         Args:
-            secret_name (str): The name of the secret to retrieve
+            secret_name: Name of the secret to retrieve
             
         Returns:
-            str: The secret value
+            The secret value
             
         Raises:
-            ValueError: If the project is not configured or secret is not found
-            Exception: If the request to Doppler API fails
+            HTTPException: If secret is not found or there's an API error
         """
-        if not self.project:
-            error_msg = "Doppler project not configured. Please set 'project' in the DOPPLER section of your config."
-            self._logger.error(error_msg)
-            raise ValueError(error_msg)
+        current_time = time.time()
+        
+        # Refresh cache if TTL has expired or no secrets are loaded
+        time_since_last_fetch = current_time - self._last_fetch_time
+        if time_since_last_fetch > self._cache_ttl:
+            self._logger.info(f"Cache TTL expired ({time_since_last_fetch:.1f}s > {self._cache_ttl}s). Refreshing secrets from Doppler...")
+            await self._fetch_secrets()
+        elif not self._secrets:
+            self._logger.info("No secrets loaded. Fetching from Doppler...")
+            await self._fetch_secrets()
+        else:
+            self._logger.info("Secrets already loaded. Using cached secrets.") 
+        
+        # Check if secret exists
+        if secret_name not in self._secrets:
+            self._logger.error(f"Secret '{secret_name}' not found in Doppler config")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Secret '{secret_name}' not found in Doppler config"
+            )
             
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
+        return self._secrets[secret_name]
+
+    async def _fetch_secrets(self) -> None:
+        """Fetch all secrets from Doppler API and update the cache"""
+        url = "https://api.doppler.com/v3/configs/config/secrets/download"
+        params = {
+            "project": self.project,
+            "config": self.config,
+            "format": "json"
         }
         
-        url = f"{self.BASE_URL}/projects/{self.project}/configs/config/secrets?name={secret_name}"
-        self._logger.debug("Fetching secret from Doppler", 
-                         extra={"secret_name": secret_name, "project": self.project})
+        headers = {"Authorization": f"Bearer {self.doppler_api_key}"}
         
         try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-            
-            # The response structure may vary based on your Doppler setup
-            if "secrets" in data and secret_name in data["secrets"]:
-                secret_value = data["secrets"][secret_name]["value"]
-                self._logger.debug("Successfully retrieved secret",
-                                 extra={"secret_name": secret_name, "project": self.project})
-                return secret_value
-            elif "value" in data:
-                self._logger.debug("Successfully retrieved secret (legacy format)",
-                                 extra={"secret_name": secret_name, "project": self.project})
-                return data["value"]
-            else:
-                error_msg = f"Secret '{secret_name}' not found in the response"
-                self._logger.error(error_msg, extra={"response_data": data})
-                raise ValueError(error_msg)
+            self._logger.debug("Fetching secrets from Doppler")
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, params=params, headers=headers, timeout=15.0)
+                response.raise_for_status()
                 
-        except requests.exceptions.RequestException as e:
-            error_msg = f"Failed to fetch secret from Doppler: {str(e)}"
-            self._logger.exception(error_msg, extra={"secret_name": secret_name, "project": self.project})
-            raise Exception(error_msg) from e
+                # Update cache
+                self._secrets = response.json()
+                self._last_fetch_time = time.time()
+                self._logger.debug("Successfully updated secrets cache")
+                
+        except httpx.HTTPStatusError as e:
+            self._logger.error(f"Failed to fetch secrets from Doppler: {str(e)}")
+            # Don't clear existing cache if we fail to refresh
+            if not self._secrets:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=f"Failed to fetch secrets from Doppler: {str(e)}"
+                )
+        except Exception as e:
+            self._logger.error(f"Unexpected error fetching secrets: {str(e)}")
+            if not self._secrets:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Unexpected error fetching secrets: {str(e)}"
+                )
 
 
-def get_doppler_secret(secret_name: str) -> str:
+async def get_doppler_secret(secret_name: str) -> str:
     """
-    Convenience function to get a secret from Doppler using environment configuration.
+    Get a secret from Doppler with caching.
+    
+    This is the main entry point for accessing secrets.
     
     Args:
         secret_name: The name of the secret to retrieve
@@ -130,7 +146,7 @@ def get_doppler_secret(secret_name: str) -> str:
         The secret value
         
     Example:
-        >>> db_password = get_doppler_secret("DB_PASSWORD")
+        >>> db_password = await get_doppler_secret("DB_PASSWORD")
     """
-    client = _get_doppler_client()
-    return client.get_secret(secret_name)
+    client = DopplerSecrets.get_instance()
+    return await client.get_secret(secret_name)

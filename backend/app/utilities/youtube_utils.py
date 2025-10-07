@@ -1,9 +1,11 @@
 import os
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 import httpx
+
 from fastapi import HTTPException, status
 
 from app.utilities.logger import get_logger
+from app.utilities.doppler_utils import get_doppler_secret
 
 
 # YouTube Data API v3 configuration
@@ -28,9 +30,10 @@ async def get_channel_id(channel_name: str = CHANNEL_NAME) -> Optional[str]:
     logger.debug(f"Looking up channel ID for: {channel_name}")
     
     try:
-        api_key = os.getenv("YOUTUBE_API_KEY")
-        if not api_key:
-            logger.error("YOUTUBE_API_KEY is not set in environment variables")
+        try:
+            api_key = await get_doppler_secret("YOUTUBE_API_KEY")
+        except Exception as e:
+            logger.error(f"Failed to get YouTube API key from Doppler: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Server configuration error: Missing YouTube API key"
@@ -96,9 +99,10 @@ async def get_latest_videos(channel_id: str, is_short: bool = False) -> Optional
     logger = get_logger(f"{__name__}.get_latest_videos")
     logger.debug(f"Fetching latest {'short' if is_short else 'video'} for channel: {channel_id}")
     
-    api_key = os.getenv("YOUTUBE_API_KEY")
-    if not api_key:
-        logger.error("YOUTUBE_API_KEY is not set in environment variables")
+    try:
+        api_key = await get_doppler_secret("YOUTUBE_API_KEY")
+    except Exception as e:
+        logger.error(f"Failed to get YouTube API key from Doppler: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Server configuration error: Missing YouTube API key"
