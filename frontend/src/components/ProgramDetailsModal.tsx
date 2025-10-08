@@ -2,17 +2,22 @@ import React from 'react';
 import { FiX } from 'react-icons/fi';
 import AddToCartButton from './AddToCartButton';
 
+interface Program {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  price: number;
+  longDescription: string;
+  duration: string;
+  level: string;
+  focus: string;
+}
+
 interface ProgramDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  program: {
-    id: number;
-    title: string;
-    description: string;
-    longDescription?: string;
-    image: string;
-    price: number;
-  } | null;
+  program: Program | null;
   isInCart: boolean;
   onAddToCart: (item: any) => void;
 }
@@ -55,11 +60,10 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
               <div className="space-y-4">
                 <div className="p-4 bg-secondary-50 rounded-lg">
                   <h4 className="font-medium text-primary-900 mb-2">Program Details</h4>
-                  <ul className="space-y-2 text-secondary-800">
-                    <li>• Duration: {program.id} weeks</li>
-                    <li>• Level: All levels</li>
-                    <li>• Focus: Strength & Hypertrophy</li>
-                    <li>• Equipment: Gym or Home Equipment</li>
+                  <ul className="list-disc pl-6 text-secondary-700 space-y-1">
+                    <li>Duration: {program.duration}</li>
+                    <li>Level: {program.level}</li>
+                    <li>Focus: {program.focus}</li>
                   </ul>
                 </div>
                 

@@ -18,8 +18,7 @@ class DopplerSecrets:
     _instance: Optional['DopplerSecrets'] = None
     _secrets: Dict[str, str] = {}
     _last_fetch_time: float = 0
-    # _cache_ttl: int = 86400  # 24 hour TTL
-    _cache_ttl: int = 60  # 1 minute TTL
+    _cache_ttl: int = 86400  # 24 hour TTL
 
     def __init__(self):
         if self._instance is not None:

@@ -1,11 +1,86 @@
-import os
-from typing import Dict, Optional
+import time
+from typing import Dict, Optional, Any
 import httpx
 
 from fastapi import HTTPException, status
-
 from app.utilities.logger import get_logger
 from app.utilities.doppler_utils import get_doppler_secret
+
+
+class YouTubeCache:
+    """
+    Singleton class to cache YouTube videos and shorts with TTL.
+    """
+    _instance: Optional['YouTubeCache'] = None
+    _cache: Dict[str, Dict[str, Any]] = {
+        'video': {'data': None, 'timestamp': 0},
+        'short': {'data': None, 'timestamp': 0}
+    }
+    _ttl: int = 86400  # 24 hours in seconds
+
+    def __new__(cls):
+        if cls._instance is not None:
+            raise RuntimeError("Use get_instance() instead")
+        instance = super().__new__(cls)
+        instance._logger = get_logger(__name__)
+        return instance
+
+    def __init__(self):
+        # Skip initialization if already initialized
+        if hasattr(self, '_initialized'):
+            return
+        self._initialized = True
+        self._logger.info("Initializing YouTubeCache")
+
+    @classmethod
+    def get_instance(cls) -> 'YouTubeCache':
+        """Get or create the singleton instance"""
+        if cls._instance is None:
+            cls._instance = cls()  # This will call both __new__ and __init__
+        return cls._instance
+
+    def get(self, cache_key: str) -> Optional[Dict]:
+        """Get cached data if it exists and is not expired"""
+        cache_entry = self._cache.get(cache_key)
+        if not cache_entry or not cache_entry['data']:
+            self._logger.info(f"Cache miss - No data for {cache_key}")
+            return None
+
+        current_time = time.time()
+        time_since_update = current_time - cache_entry['timestamp']
+        
+        if time_since_update > self._ttl:
+            self._logger.info(
+                f"Cache expired for {cache_key} "
+                f"(age: {time_since_update/3600:.1f}h > {self._ttl/3600:.1f}h)"
+            )
+            return None
+
+        self._logger.info(
+            f"Cache hit for {cache_key} "
+            f"(age: {time_since_update/60:.1f}m)"
+        )
+        return cache_entry['data']
+
+    def set(self, cache_key: str, data: Dict) -> None:
+        """Store data in cache with current timestamp"""
+        self._cache[cache_key] = {
+            'data': data,
+            'timestamp': time.time()
+        }
+        self._logger.info(f"Updated cache for {cache_key}")
+        if cache_key in data.get('id', ''):
+            self._logger.debug(f"Cached data: {data.get('id')}")
+        else:
+            self._logger.debug("Cached data updated")
+
+
+# YouTube Caching mechanism
+def get_youtube_cache() -> YouTubeCache:
+    """Get the singleton instance of YouTubeCache with lazy initialization."""
+    if YouTubeCache._instance is None:
+        YouTubeCache._instance = YouTubeCache()
+    return YouTubeCache._instance
 
 
 # YouTube Data API v3 configuration
@@ -195,7 +270,7 @@ async def get_latest_videos(channel_id: str, is_short: bool = False) -> Optional
 
 async def get_latest_video() -> Dict:
     """
-    Get the latest regular video from the channel using YouTube Data API v3.
+    Get the latest regular video from the channel using cache or YouTube Data API v3.
     
     Returns:
         Dictionary containing video details
@@ -206,6 +281,14 @@ async def get_latest_video() -> Dict:
     logger = get_logger(f"{__name__}.get_latest_video")
     logger.info("Fetching latest regular video")
     
+    # Try to get from cache first
+    cache = get_youtube_cache()
+    cached_video = cache.get('video')
+    if cached_video:
+        logger.info("Returning cached video")
+        return cached_video
+    
+    logger.info("Cache miss, fetching from YouTube API")
     channel_id = await get_channel_id()
     if not channel_id:
         logger.warning("YouTube channel not found")
@@ -225,12 +308,18 @@ async def get_latest_video() -> Dict:
         )
     
     logger.debug(f"Found video with ID: {video.get('id')}")
+    
+    # Update cache
+    cache = get_youtube_cache()
+    cache.set('video', video)
+    logger.info("Updated video cache")
+    
     return video
 
 
 async def get_latest_short() -> Dict:
     """
-    Get the latest short from the channel using YouTube Data API v3.
+    Get the latest short from the channel using cache or YouTube Data API v3.
     
     Returns:
         Dictionary containing short video details
@@ -241,6 +330,14 @@ async def get_latest_short() -> Dict:
     logger = get_logger(f"{__name__}.get_latest_short")
     logger.info("Fetching latest short video")
     
+    # Try to get from cache first
+    cache = get_youtube_cache()
+    cached_short = cache.get('short')
+    if cached_short:
+        logger.info("Returning cached short")
+        return cached_short
+    
+    logger.info("Cache miss, fetching from YouTube API")
     channel_id = await get_channel_id()
     if not channel_id:
         logger.warning("YouTube channel not found")
@@ -260,4 +357,10 @@ async def get_latest_short() -> Dict:
         )
     
     logger.debug(f"Found short with ID: {video.get('id')}")
+    
+    # Update cache
+    cache = get_youtube_cache()
+    cache.set('short', video)
+    logger.info("Updated short video cache")
+    
     return video

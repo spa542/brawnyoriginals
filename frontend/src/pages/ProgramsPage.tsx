@@ -10,7 +10,10 @@ interface Program {
   description: string;
   image: string;
   price: number;
-  longDescription?: string;
+  longDescription: string;
+  duration: string;
+  level: string;
+  focus: string;
 }
 
 const ProgramsPage: React.FC = () => {
@@ -21,19 +24,25 @@ const ProgramsPage: React.FC = () => {
   const programs: Program[] = [
     {
       id: 4,
-      title: '4 Week Program',
-      description: 'A balanced program designed to build consistency and see noticeable progress in your fitness goals.',
+      title: 'Program Blue (4 Week Program)',
+      description: 'A short and simple program designed for gaining muscular hypertrophy.',
       image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
       price: 19.99,
-      longDescription: 'Our 4-week program takes your fitness to the next level with progressive overload and varied training techniques. You\'ll see noticeable improvements in strength, endurance, and body composition. Includes detailed workout plans and nutrition guidance.'
+      longDescription: 'This program is designed for gaining muscular hypertrophy. This program is great for beginners and intermediates, and provides a variety of exercise selection to choose from. It is very straightforward and simple to follow.',
+      duration: '4 weeks',
+      level: 'Beginner to Intermediate',
+      focus: 'Hypertrophy'
     },
     {
       id: 6,
-      title: 'Project Omega',
-      description: 'Comprehensive training program for those committed to making lasting changes and seeing significant results.',
-      image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+      title: 'Project Genesis (17 Week Prep Program)',
+      description: 'My full workout regimen, nutrition guide and preparation for my first bodybuilding competition.',
+      image: 'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
       price: 29.99,
-      longDescription: 'This comprehensive 6-week program is designed for maximum results. Combining strength training, conditioning, and recovery protocols, you\'ll experience significant improvements in performance and physique. Includes personalized support and progress tracking.'
+      longDescription: 'This program is designed for maintenance of muscle and strength while cutting weight. This program is exactly what I followed for my first bodybuilding show. It is catered toward anyone who is intermediate or advanced getting ready for a show. The information provided in this program is very in depth, but still straightforward to follow.',
+      duration: '10 - 17 weeks',
+      level: 'Intermediate to Advanced',
+      focus: 'Muscle Maintenance and Strength'
     }
   ];
 

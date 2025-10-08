@@ -31,15 +31,12 @@ const AboutPage: React.FC = () => {
                 }}
               />
             </div>
-            <div className="prose prose-lg text-primary text-left">
+            <div className="prose prose-lg text-primary text-center mx-auto">
               <p className="mb-6">
-                [Company description will go here. This section should contain a detailed overview of Brawny Originals, 
-                its mission, values, and history. The description should be engaging and informative, highlighting 
-                what makes the company unique in the fitness industry.]
+                Brawny Originals is a fitness media brand dedicated to serving the global community of fitness enthusiasts. Our mission is to educate and inspire individuals who are passionate about training by delivering high-quality content and knowledge. Through engaging content and thought-provoking features, we bridge the gap between workout education and motivation, helping people elevate both their performance and lifestyle.
               </p>
               <p>
-                [Additional details about the company's approach to training, philosophy, and commitment to clients 
-                can be included here to provide a comprehensive understanding of the business.]
+                Whether it’s strength training, muscle building, nutrition, or overall wellness, Brawny Originals provides the tools and insights that inspire growth and motivate people to pursue their goals with purpose.
               </p>
             </div>
           </div>

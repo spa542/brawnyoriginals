@@ -5,11 +5,12 @@ import ImageCarousel from '../components/ImageCarousel';
 
 // List of filenames for the image carousel
 const GALLERY_IMAGES = [
-  'gym_photo_1.jpeg',
-  'gym_photo_2.jpeg',
-  'gym_photo_3.jpeg',
-  'gym_photo_4.jpeg',
-  'gym_photo_5.jpeg'
+  'gym_photo_1_high_res.jpeg',
+  'gym_photo_2_high_res.jpeg',
+  'gym_photo_3_high_res.jpeg',
+  'gym_photo_4_high_res.jpeg',
+  'gym_photo_5_high_res.jpeg',
+  'gym_photo_6_high_res.jpeg'
 ];
 
 
