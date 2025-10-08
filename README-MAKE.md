@@ -11,10 +11,42 @@ Located at the project root, this Makefile provides high-level commands to manag
 - `make install` - Install all dependencies (frontend and backend)
 - `make dev` - Start both frontend and backend in development mode
 - `make build` - Build both frontend and backend for production
+- `make deploy` - Prepare for server deployment (requires frontend/dist to exist)
 - `make test` - Run tests for both frontend and backend
 - `make clean` - Clean build artifacts
 - `make frontend [target]` - Run frontend-specific commands (e.g., `make frontend lint`)
 - `make backend [target]` - Run backend-specific commands (e.g., `make backend test`)
+
+## Deployment
+
+For server deployment, follow these steps:
+
+1. First, build the frontend:
+   ```bash
+   make -C frontend build
+   ```
+
+2. **Important**: Commit and push the built frontend files to your repository:
+   ```bash
+   git add frontend/dist
+   git commit -m "build: update frontend production build"
+   git push
+   ```
+
+3. On your server, pull the latest changes and run the deployment target:
+   ```bash
+   git pull
+   make deploy
+   ```
+
+This will:
+- Verify the frontend/dist directory exists
+- Build the backend for production
+- Prepare the application for serving
+
+The application can then be served using the backend production server.
+
+> **Note**: The frontend's `dist` directory must be committed to the repository as it contains the production-ready static files that will be served by the backend.
 
 ## Backend Makefile
 
