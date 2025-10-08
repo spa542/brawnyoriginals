@@ -16,6 +16,7 @@ eggs/
 lib/
 lib64/
 parts/
+dist/
 sdist/
 var/
 wheels/
@@ -206,8 +207,8 @@ marimo/_lsp/
 __marimo__/
 
 # Frontend Files
-frontend/dist
 node_modules
+frontend/dist
 
 # Mac files
 .DS_Store
