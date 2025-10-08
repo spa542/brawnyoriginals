@@ -65,6 +65,7 @@ backend:
 # Server deployment target (assumes frontend dist is already built)
 deploy:
 	@echo "Preparing for server deployment..."
+	export ENV=production
 	@if [ ! -d "frontend/dist" ]; then \
 		echo "Error: frontend/dist directory not found. Please build the frontend first."; \
 		exit 1; \
