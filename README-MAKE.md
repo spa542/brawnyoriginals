@@ -17,6 +17,17 @@ Located at the project root, this Makefile provides high-level commands to manag
 - `make frontend [target]` - Run frontend-specific commands (e.g., `make frontend lint`)
 - `make backend [target]` - Run backend-specific commands (e.g., `make backend test`)
 
+## Deployment Instructions
+
+For a fresh production deployment, run the following commands in order:
+
+```bash
+make clean     # Clean any existing build artifacts
+make install   # Install all dependencies (frontend and backend)
+make build     # Build both frontend and backend for production
+make serve     # Start the production server (serves both frontend and backend on port 8000)
+```
+
 ## Backend Makefile
 
 Located in the `backend/` directory, this Makefile manages the Python FastAPI backend.
