@@ -62,21 +62,6 @@ frontend:
 backend:
 	@$(MAKE) -C backend $(filter-out $@,$(MAKECMDGOALS))
 
-# Server deployment target (assumes frontend dist is already built)
-deploy:
-	@if [ "$(ENV)" != "production" ]; then \
-		echo "Error: ENV is not set to 'production'. Please set ENV=production before deploying."; \
-		exit 1; \
-	fi
-	@echo "Preparing for server deployment..."
-	@if [ ! -d "frontend/dist" ]; then \
-		echo "Error: frontend/dist directory not found. Please build the frontend first."; \
-		exit 1; \
-	fi
-	@echo "Building backend for production..."
-	@$(MAKE) -C backend build
-	@echo "\nDeployment ready! The application can be served using the backend production server."
-
 # Handle targets with colons (e.g., make backend:install)
 %:
 	@:
