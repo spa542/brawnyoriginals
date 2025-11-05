@@ -26,7 +26,7 @@ const ProgramsPage: React.FC = () => {
       id: 4,
       title: 'Program Blue (4 Week Program)',
       description: 'A short and simple program designed for gaining muscular hypertrophy.',
-      image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+      image: `${import.meta.env.PROD ? '/static/' : ''}images/4_week_hypertrophy_program_high_res.jpeg`,
       price: 19.99,
       longDescription: 'This program is designed for gaining muscular hypertrophy. This program is great for beginners and intermediates, and provides a variety of exercise selection to choose from. It is very straightforward and simple to follow.',
       duration: '4 weeks',
@@ -37,10 +37,10 @@ const ProgramsPage: React.FC = () => {
       id: 6,
       title: 'Project Genesis (17 Week Prep Program)',
       description: 'My full workout regimen, nutrition guide and preparation for my first bodybuilding competition.',
-      image: 'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-      price: 29.99,
+      image: `${import.meta.env.PROD ? '/static/' : ''}images/program_genesis_high_res_2.jpeg`,
+      price: 59.99,
       longDescription: 'This program is designed for maintenance of muscle and strength while cutting weight. This program is exactly what I followed for my first bodybuilding show. It is catered toward anyone who is intermediate or advanced getting ready for a show. The information provided in this program is very in depth, but still straightforward to follow.',
-      duration: '10 - 17 weeks',
+      duration: '17 weeks',
       level: 'Intermediate to Advanced',
       focus: 'Muscle Maintenance and Strength'
     }
@@ -70,7 +70,7 @@ const ProgramsPage: React.FC = () => {
       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full w-full"
     >
       {/* Image Section */}
-      <div className="h-48 bg-gray-200 overflow-hidden">
+      <div className="h-64 bg-gray-200 overflow-hidden">
         <img 
           src={program.image} 
           alt={program.title}
