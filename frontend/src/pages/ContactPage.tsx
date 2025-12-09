@@ -18,6 +18,7 @@ const ContactPage: React.FC = () => {
   const [recaptchaReady, setRecaptchaReady] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+
   const handleRecaptchaVerify = useCallback((token: string) => {
     setRecaptchaToken(token);
     setRecaptchaReady(true);
@@ -247,7 +248,7 @@ const ContactPage: React.FC = () => {
                   }}
                 >
                   View Latest Videos & Shorts
-                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-5 h-5 ml-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                 </a>
@@ -277,7 +278,7 @@ const ContactPage: React.FC = () => {
               />
             )}
           </VideoLoader>
-          <div className="text-center mb-6">
+          <div className="text-center mt-8 mb-6">
             <button
               onClick={() => {
                 const element = document.getElementById('shorts-section');
@@ -287,10 +288,10 @@ const ContactPage: React.FC = () => {
                   window.scrollTo({ top: y, behavior: 'smooth' });
                 }
               }}
-              className="inline-flex items-center text-tertiary-600 hover:text-tertiary-800 transition-colors font-medium bg-secondary px-6 py-2 rounded-md hover:bg-gray-100"
+              className="inline-flex items-center text-tertiary-600 hover:text-tertiary-800 transition-colors font-medium"
             >
               View More Content
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-5 h-5 ml-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             </button>

@@ -216,3 +216,4 @@ frontend/dist
 # Other Files
 important.txt
 logs
+stripe_api_commands.txt

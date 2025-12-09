@@ -6,6 +6,8 @@ import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import ProgramsPage from './pages/ProgramsPage';
 import ContactPage from './pages/ContactPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentCancelPage from './pages/PaymentCancelPage';
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
                   <ContactPage />
                 </div>
               } />
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
+              <Route path="/payment-cancel" element={<PaymentCancelPage />} />
             </Routes>
           </main>
           <BottomNavigation />
