@@ -79,13 +79,13 @@ const PaymentSuccessPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigateToTop('/programs')}
-                className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-1.5 sm:py-2 border border-primary text-sm sm:text-base md:text-lg font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 transition-colors duration-200"
+                className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 border border-primary text-sm sm:text-base md:text-lg font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 transition-colors duration-200"
               >
-                Explore More Programs
+                Explore Programs
               </button>
               <button
                 onClick={() => navigateToTop('/')}
-                className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-1.5 sm:py-2 border border-primary text-sm sm:text-base md:text-lg font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 transition-colors duration-200"
+                className="w-full sm:w-48 md:w-56 inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 border border-primary text-sm sm:text-base md:text-lg font-medium rounded-md text-secondary bg-tertiary-600 hover:bg-tertiary-700 transition-colors duration-200"
               >
                 Return to Home
               </button>
