@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from app.utilities.logger import get_logger
 from app.utilities.doppler_utils import get_doppler_secret
+from app.utilities.helpers import is_dev
 
 
 RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
@@ -23,6 +24,7 @@ async def verify_recaptcha_token(token: str) -> bool:
     Raises:
         HTTPException: If there's an error during verification
     """
+    
     # Initialize logger inside the function
     try:
         logger = get_logger(__name__)
@@ -86,6 +88,12 @@ async def verify_recaptcha_token(token: str) -> bool:
                     score,
                     extra={"score": score}
                 )
+                
+                # Bypass reCAPTCHA verification in development mode if is_dev() - Letting the above code run for testing purposes
+                if is_dev():
+                    logger.info("Development mode: Bypassing reCAPTCHA verification")
+                    return True
+
                 return score >= 0.5  # Adjust threshold as needed
                 
             except ValueError as e:

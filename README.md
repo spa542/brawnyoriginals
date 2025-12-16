@@ -21,6 +21,7 @@ brawnyoriginals/
 - Node.js (v22+)
 - Python (3.13+)
 - npm or yarn
+- [Stripe CLI](https://stripe.com/docs/stripe-cli) (for local development with webhooks)
 
 ### Installation
 
@@ -39,9 +40,41 @@ brawnyoriginals/
    npm install
    ```
 
+4. Set up Stripe CLI (for local development):
+   ```bash
+   # Install Stripe CLI (if not already installed)
+   # See: https://stripe.com/docs/stripe-cli#install
+   
+   # Login to your Stripe account
+   make stripe-login
+   
+   # In a separate terminal, start the webhook listener
+   make stripe-webhook
+   ```
+
 ### Development
 
 1. Start the backend server:
+   ```bash
+   make dev
+   ```
+
+   Or run them separately:
+   ```bash
+   # Terminal 1: Backend
+   cd backend
+   uvicorn main:app --reload
+   
+   # Terminal 2: Frontend
+   cd frontend
+   npm run dev
+   ```
+
+2. For testing webhooks locally, make sure you have the Stripe CLI running in a separate terminal:
+   ```bash
+   make stripe-webhook
+   ```
+   ^^ This will forward webhook events from Stripe to your local development server.
    ```bash
    cd backend
    uvicorn main:app --reload

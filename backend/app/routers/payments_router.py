@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request, status, HTTPException
+from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
+import stripe
 
 from app.controllers import payments_controller
 from app.models.payments_model import (
@@ -10,6 +11,7 @@ from app.models.payments_model import (
 )
 from app.utilities.logger import get_logger
 from app.utilities.recaptcha import verify_recaptcha_token
+from app.utilities.doppler_utils import get_doppler_secret
 
 
 router = APIRouter()
@@ -165,39 +167,61 @@ async def create_checkout_session(
     status_code=status.HTTP_200_OK,
     include_in_schema=False,  # Exclude from OpenAPI schema as it's a webhook
     summary="Stripe webhook handler",
-    description="Handles incoming webhook events from Stripe."
+    description="Handles incoming webhook events from Stripe asynchronously."
 )
-async def webhook_handler(request: Request) -> WebhookResponse:
-    logger = get_logger(__name__)
+async def webhook_handler(background_tasks: BackgroundTasks, request: Request) -> WebhookResponse:
     """
-    Handle incoming webhook events from Stripe.
+    Handle incoming webhook events from Stripe asynchronously.
     
-    This endpoint processes various Stripe webhook events such as successful payments,
-    payment failures, and subscription events. It verifies the webhook signature
-    and dispatches to the appropriate handler.
+    This endpoint quickly acknowledges receipt of webhook events from Stripe
+    and processes them in the background to ensure timely responses.
     
     Args:
+        background_tasks: FastAPI's BackgroundTasks for async processing
         request: The incoming HTTP request containing the webhook event
         
     Returns:
-        WebhookResponse: Confirmation of received webhook
+        WebhookResponse: Immediate acknowledgment of received webhook
         
     Raises:
-        HTTPException: If webhook processing fails
+        HTTPException: If the webhook signature is invalid
     """
+    logger = get_logger(__name__)
+    
     try:
-        response = await payments_controller.handle_webhook(request)
-        logger.info(
-            "Processed Stripe webhook",
-            extra={"event_type": getattr(response, 'event_type', 'unknown')}
+        # Verify the webhook signature first (synchronous part)
+        payload = await request.body()
+        sig_header = request.headers.get('stripe-signature')
+        webhook_secret = await get_doppler_secret("STRIPE_WEBHOOK_SECRET_KEY")
+        
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+            # Store the event for future processing in the background task
+            request.state.event = event
+        except ValueError as e:
+            logger.warning("Invalid Stripe webhook payload", exc_info=True)
+            raise HTTPException(status_code=400, detail="Invalid payload") from e
+        except stripe.error.SignatureVerificationError as e:
+            logger.warning("Invalid Stripe signature", exc_info=True)
+            raise HTTPException(status_code=400, detail="Invalid signature") from e
+        
+        # Queue the webhook processing in the background
+        background_tasks.add_task(payments_controller.handle_webhook, request)
+        
+        # Return immediate response
+        return WebhookResponse(
+            received=True,
+            event_type=event.type,
+            event_id=event.id
         )
-        return response
-    except HTTPException as e:
-        logger.warning(
-            "Webhook processing failed",
-            extra={"status_code": e.status_code}
-        )
+    except HTTPException:
         raise
+    except Exception as e:
+        logger.error("Unexpected error in webhook handler", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        ) from e
     except Exception as e:
         logger.error(
             "Webhook processing error",

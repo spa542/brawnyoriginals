@@ -218,137 +218,134 @@ async def create_checkout_session(
         ) from e
 
 
-async def fulfill_order(session_id: str) -> Dict[str, str]:
+async def handle_webhook(request: Request) -> None:
     """
-    Fulfill the customer's order after payment
+    Process a Stripe webhook event in the background.
+    
+    This function processes the webhook event that has already been verified
+    by the router. The event object is expected to be stored in request.state.
     
     Args:
-        session_id: The Stripe Checkout Session ID
-        
-    Returns:
-        Dict with fulfillment status
-        
-    Raises:
-        HTTPException: If there's an error during order fulfillment
-        
-    Note:
-        This is a placeholder for order fulfillment logic
+        request: The incoming webhook request with the Stripe event in request.state.event
     """
     logger = get_logger(__name__)
     
     try:
-        # Get Stripe client
-        stripe_client = await get_stripe_client()
+        # Get the event from request state (already verified in the router)
+        event = request.state.event
         
-        # Retrieve the session to get the latest information
-        session = stripe_client.checkout.Session.retrieve(session_id)
-        
-        # Log the fulfillment start
         logger.info(
-            "Order fulfillment started",
+            "Processing webhook event in background",
             extra={
-                "session_id": session_id,
-                "payment_status": session.payment_status,
-                "customer_email": session.customer_details.email if hasattr(session.customer_details, 'email') else None
+                "event_id": event.id,
+                "event_type": event.type,
+                "livemode": event.livemode
             }
         )
         
-        # TODO: Implement actual order fulfillment logic here
-        # This could include:
-        # 1. Updating your database
-        # 2. Sending confirmation emails
-        # 3. Triggering shipping processes
-        # 4. Updating inventory
-        
-        logger.info("Order fulfillment completed", extra={"session_id": session_id})
-        
-        return {"status": "success", "message": "Order is being processed"}
-        
-    except HTTPException:
-        raise
-    except stripe.error.StripeError as e:
-        logger.error("Stripe error during order fulfillment", exc_info=True, extra={"session_id": session_id})
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        ) from e
-    except Exception as e:
-        logger.error("Error during order fulfillment", exc_info=True, extra={"session_id": session_id})
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while processing your order"
-        ) from e
-
-
-async def handle_webhook(request: Request) -> WebhookResponse:
-    """
-    Handle Stripe webhook events
-    
-    Args:
-        request: The incoming request with the webhook event
-        
-    Returns:
-        WebhookResponse with event details
-        
-    Raises:
-        HTTPException: If the webhook signature is invalid or event processing fails
-    """
-    logger = get_logger(__name__)
-    payload = await request.body()
-    sig_header = request.headers.get('stripe-signature')
-    
-    if not sig_header:
-        logger.warning("Missing Stripe-Signature header")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing Stripe-Signature header"
-        )
-    
-    try:
-        # Get webhook secret from Doppler
-        webhook_secret = await get_doppler_secret("STRIPE_WEBHOOK_SECRET")
-        
-        # Verify webhook signature
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, webhook_secret
-        )
-        
-        logger.info(
-            "Received webhook event",
-            extra={"event_id": event.id, "event_type": event.type}
-        )
-        
-        # Handle the event
-        if event.type == 'checkout.session.completed':
-            session = event.data.object  # contains a stripe.PaymentIntent
-            logger.info("Checkout session completed", extra={"session_id": session.id})
-            # TODO: Handle successful payment
+        # Handle the event based on its type
+        if event.type == 'payment_intent.succeeded':
+            # Fulfill the order!
+            payment_intent = event.data.object
+            logger.info(
+                "Payment intent succeeded",
+                extra={
+                    "payment_intent_id": payment_intent.id,
+                    "amount_received": getattr(payment_intent, 'amount_received', None),
+                    "currency": getattr(payment_intent, 'currency', None),
+                    "customer_id": getattr(payment_intent, 'customer', None),
+                    "payment_method": getattr(payment_intent, 'payment_method', None),
+                    "metadata": dict(getattr(payment_intent, 'metadata', {})),
+                    "charges": {
+                        'count': len(getattr(payment_intent, 'charges', {}).get('data', [])),
+                        'amounts': [c.get('amount') for c in getattr(payment_intent, 'charges', {}).get('data', []) if 'amount' in c]
+                    } if hasattr(payment_intent, 'charges') else None
+                }
+            )
+            await handle_payment_intent_succeeded(payment_intent)
             
-        elif event.type == 'payment_intent.succeeded':
-            payment_intent = event.data.object  # contains a stripe.PaymentIntent
-            logger.info("Payment succeeded", extra={"payment_intent_id": payment_intent.id})
-            # TODO: Handle successful payment
+        elif event.type == 'checkout.session.completed':
+            # Log completed checkout session for bookkeeping
+            session = event.data.object
+            logger.info(
+                "Checkout session completed",
+                extra={
+                    "session_id": session.id,
+                    "customer_email": getattr(session, 'customer_email', None),
+                    "payment_intent": getattr(session, 'payment_intent', None),
+                    "amount_total": getattr(session, 'amount_total', None),
+                    "currency": getattr(session, 'currency', None)
+                }
+            )
+            
+        elif event.type == 'checkout.session.expired':
+            # Log expired checkout session for bookkeeping
+            session = event.data.object
+            logger.info(
+                "Checkout session expired",
+                extra={
+                    "session_id": session.id,
+                    "customer_email": getattr(session, 'customer_email', None),
+                    "expires_at": getattr(session, 'expires_at', None)
+                }
+            )
             
         elif event.type == 'payment_intent.payment_failed':
+            # Log failed payment for bookkeeping
             payment_intent = event.data.object
-            logger.warning("Payment failed", extra={"payment_intent_id": payment_intent.id})
-            # TODO: Handle failed payment
-        
-        return WebhookResponse(
-            received=True,
-            event_type=event.type,
-            event_id=event.id
-        )
-        
-    except stripe.error.SignatureVerificationError as e:
-        logger.error("Invalid webhook signature", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid webhook signature"
-        )
+            logger.warning(
+                "Payment failed",
+                extra={
+                    "payment_intent_id": payment_intent.id,
+                    "amount": getattr(payment_intent, 'amount', None),
+                    "currency": getattr(payment_intent, 'currency', None),
+                    "failure_code": getattr(payment_intent, 'last_payment_error', {})
+                                    .get('code', None) if hasattr(payment_intent, 'last_payment_error') else None,
+                    "failure_message": getattr(payment_intent, 'last_payment_error', {})
+                                    .get('message', None) if hasattr(payment_intent, 'last_payment_error') else None
+                }
+            )
+        else:
+            logger.debug(
+                "Received unhandled event type",
+                extra={"event_type": event.type}
+            )
+            
     except Exception as e:
-        logger.error("Error processing webhook", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing webhook"
+        logger.error(
+            "Error processing webhook event",
+            extra={
+                "event_type": getattr(event, 'type', 'unknown'),
+                "event_id": getattr(event, 'id', 'unknown'),
+                "error": str(e),
+                "error_type": type(e).__name__
+            },
+            exc_info=True
         )
+
+
+async def handle_payment_intent_succeeded(payment_intent: stripe.PaymentIntent) -> None:
+    """Handle successful payment intent."""
+    logger = get_logger(__name__)
+    try:
+        # TODO UPDATE LOGGING HERE 
+        logger.info(
+            "Payment intent succeeded",
+            extra={
+                "payment_intent_id": payment_intent.id,
+                "amount": payment_intent.amount,
+                "currency": payment_intent.currency,
+                "customer": payment_intent.customer
+            }
+        )
+        
+        # TODO: Add your business logic here
+        # Example: Update order status, fulfill order, etc.
+        
+    except Exception as e:
+        logger.error(
+            "Error handling payment_intent.succeeded",
+            extra={"payment_intent_id": payment_intent.id},
+            exc_info=True
+        )
+        raise

@@ -6,14 +6,16 @@ all: help
 # Help target to show all available commands
 help:
 	@echo "Available commands:"
-	@echo "  make install     - Install all dependencies (frontend and backend)"
-	@echo "  make dev         - Start both frontend and backend in development mode"
-	@echo "  make build       - Build both frontend and backend for production"
-	@echo "  make serve       - Start production server (serves both frontend and backend on port 8000)"
-	@echo "  make test        - Run tests for both frontend and backend"
-	@echo "  make clean       - Clean build artifacts"
-	@echo "  make frontend    - Run frontend-specific commands (e.g., 'make frontend install')"
-	@echo "  make backend     - Run backend-specific commands (e.g., 'make backend install')"
+	@echo "  make install       - Install all dependencies (frontend and backend)"
+	@echo "  make dev           - Start both frontend and backend in development mode"
+	@echo "  make build         - Build both frontend and backend for production"
+	@echo "  make serve         - Start production server (serves both frontend and backend on port 8000)"
+	@echo "  make test          - Run tests for both frontend and backend"
+	@echo "  make clean         - Clean build artifacts"
+	@echo "  make frontend      - Run frontend-specific commands (e.g., 'make frontend install')"
+	@echo "  make backend       - Run backend-specific commands (e.g., 'make backend install')"
+	@echo "  make stripe-login  - Authenticate with Stripe CLI for local development"
+	@echo "  make stripe-webhook - Start Stripe webhook listener"
 
 # Install all dependencies
 install:
@@ -53,6 +55,17 @@ clean:
 	@echo "Cleaning..."
 	@$(MAKE) -C backend clean
 	@$(MAKE) -C frontend clean
+
+# Authenticate with Stripe CLI for local development
+stripe-login:
+	@echo "Authenticating with Stripe CLI..."
+	@stripe login
+	@echo "\nTo test webhooks locally, run: make stripe-webhook"
+
+# Start Stripe webhook listener
+stripe-webhook:
+	@echo "Starting Stripe webhook listener..."
+	@stripe listen --forward-to http://localhost:8000/api/payments/stripe/webhook
 
 # Frontend-specific commands
 frontend:
