@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
+import { getBaseUrl } from '../utils/helpers';
 
 type VideoType = 'youtube' | 'short' | 'tiktok';
 
@@ -19,7 +20,7 @@ const VideoLoader: React.FC<VideoLoaderProps> = ({ type, children }) => {
         setIsLoading(true);
         setError(null);
         
-        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const baseUrl = getBaseUrl();
         const endpoint = 
           type === 'youtube' ? `${baseUrl}/api/latest/youtube` :
           type === 'short' ? `${baseUrl}/api/latest/short` :

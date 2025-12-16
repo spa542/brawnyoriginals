@@ -1,13 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FiShoppingCart, FiX } from 'react-icons/fi';
+import { FiShoppingCart, FiX, FiLoader } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
-
+import { getBaseUrl } from '../utils/helpers';
+import { ReCAPTCHA } from './ReCAPTCHA';
 
 const Navigation: React.FC = () => {
   const location = useLocation();
   const { items, removeItem, clearCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const cartRef = useRef<HTMLDivElement>(null);
 
   // Close cart when clicking outside
@@ -30,6 +34,77 @@ const Navigation: React.FC = () => {
 
   const cartItems = items;
   const cartTotal = items.reduce((total, item) => total + (item.price || 0), 0);
+
+  const handleRecaptchaVerify = (token: string) => {
+    setRecaptchaToken(token);
+  };
+
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    
+    setIsCheckingOut(true);
+    setError(null);
+    
+    try {
+      if (!recaptchaToken) {
+        throw new Error('reCAPTCHA verification is required');
+      }
+
+      const price_ids = cartItems.map(item => item.priceId);
+      
+      // Generate token with all items
+      const baseUrl = getBaseUrl(); 
+      const tokenResponse = await fetch(`${baseUrl}/api/payments/generate-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          price_ids,
+          captcha_token: recaptchaToken
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate token');
+      }
+      
+      const { token: sessionToken } = await tokenResponse.json();
+      
+      // Create checkout session with all items
+      const sessionResponse = await fetch(`${baseUrl}/api/payments/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          token: sessionToken,
+          price_ids: price_ids,
+          quantity: 1, // Quantity per item - Always 1
+          success_url: `${window.location.origin}/#/payment-success`,
+          cancel_url: `${window.location.origin}/#/payment-cancel`
+        })
+      });
+
+      if (!sessionResponse.ok) {
+        const errorData = await sessionResponse.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create checkout session');
+      }
+      
+      const sessionData = await sessionResponse.json();
+      
+      // Redirect to Stripe Checkout
+      window.location.href = sessionData.url;
+      
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to process checkout. Please try again.');
+      setIsCheckingOut(false);
+    }
+  };
 
   const navItems = [
     { path: '/', label: 'Home' },
@@ -144,16 +219,40 @@ const Navigation: React.FC = () => {
                       <div className="flex space-x-3">
                         <button 
                           onClick={() => clearCart()}
-                          className="flex-1 flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-primary bg-white hover:bg-gray-50"
+                          disabled={cartItems.length === 0}
+                          className="flex-1 flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-primary bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Clear Cart
                         </button>
                         <button 
-                          className="flex-1 flex justify-center items-center px-4 py-2 border border-primary rounded-md shadow-sm text-sm font-medium text-white bg-tertiary-600 hover:bg-tertiary-700"
+                          type="button"
+                          onClick={handleCheckout}
+                          disabled={cartItems.length === 0 || isCheckingOut}
+                          className={`flex-1 flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                            cartItems.length === 0 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : isCheckingOut 
+                                ? 'bg-tertiary-400' 
+                                : 'bg-tertiary-600 hover:bg-tertiary-700'
+                          }`}
                         >
-                          Checkout
+                          {isCheckingOut ? (
+                            <>
+                              <FiLoader className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                              Processing...
+                            </>
+                          ) : cartItems.length === 0 ? (
+                            'Cart is Empty'
+                          ) : (
+                            'Proceed to Checkout'
+                          )}
                         </button>
                       </div>
+                      {error && (
+                        <div className="text-red-500 text-sm mt-2">
+                          {error}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -190,6 +289,15 @@ const Navigation: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
+      
+      {/* Hidden reCAPTCHA component */}
+      <div style={{ display: 'none' }}>
+        <ReCAPTCHA 
+          sitekey="6Ldh-dorAAAAAG7kBeNcDUsLM5PtgfZPip2f9jwH"
+          action="checkout"
+          onVerify={handleRecaptchaVerify}
+        />
       </div>
     </nav>
   );

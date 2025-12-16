@@ -10,6 +10,7 @@ interface Program {
   description: string;
   image: string;
   price: number;
+  priceId: string;  // Stripe Price ID
   longDescription: string;
   duration: string;
   level: string;
@@ -28,6 +29,9 @@ const ProgramsPage: React.FC = () => {
       description: 'A short and simple program designed for gaining muscular hypertrophy.',
       image: `${import.meta.env.PROD ? '/static/' : ''}images/4_week_hypertrophy_program_high_res.jpeg`,
       price: 19.99,
+      priceId: import.meta.env.PROD 
+        ? 'price_1Sf0Jj2cxMNEOVDK1vgR9A6A'  // Production price ID
+        : 'price_1ScWdxK5tsm2JTU1Zogy9QKZ', // Development/Test price ID
       longDescription: 'This program is designed for gaining muscular hypertrophy. This program is great for beginners and intermediates, and provides a variety of exercise selection to choose from. It is very straightforward and simple to follow.',
       duration: '4 weeks',
       level: 'Beginner to Intermediate',
@@ -39,6 +43,9 @@ const ProgramsPage: React.FC = () => {
       description: 'My full workout regimen, nutrition guide and preparation for my first bodybuilding competition.',
       image: `${import.meta.env.PROD ? '/static/' : ''}images/program_genesis_high_res_2.jpeg`,
       price: 59.99,
+      priceId: import.meta.env.PROD
+        ? 'price_1Sf0Js2cxMNEOVDKqVYTmhvZ'  // Production price ID
+        : 'price_1ScWd9K5tsm2JTU1tjTXlwc8', // Development/Test price ID
       longDescription: 'This program is designed for maintenance of muscle and strength while cutting weight. This program is exactly what I followed for my first bodybuilding show. It is catered toward anyone who is intermediate or advanced getting ready for a show. The information provided in this program is very in depth, but still straightforward to follow.',
       duration: '17 weeks',
       level: 'Intermediate to Advanced',
@@ -52,7 +59,8 @@ const ProgramsPage: React.FC = () => {
       duration: program.id,
       description: program.description,
       image: program.image,
-      price: program.price
+      price: program.price,
+      priceId: program.priceId
     });
   };
 
@@ -94,7 +102,6 @@ const ProgramsPage: React.FC = () => {
             onClick={() => handleAddToCart(program)}
             dataTestId={`add-to-cart-${program.id}`}
             className="py-3"
-            comingSoon={true}
           />
           <button 
             onClick={() => openProgramDetails(program)}

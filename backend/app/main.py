@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
 import uvicorn
 
-from app.routers import core_router, health_router, utility_router
+from app.routers import core_router, health_router, utility_router, payments_router
 from app.models.core_model import ErrorResponse
 from app.utilities.helpers import is_dev, is_prod, is_valid_environment
 from app.utilities.logger import init_logger
@@ -86,6 +86,7 @@ def create_app() -> FastAPI:
     app.include_router(core_router.router)
     app.include_router(health_router.router, prefix="/api")
     app.include_router(utility_router.router, prefix="/api") 
+    app.include_router(payments_router.router, prefix="/api") 
 
     # Check that environmetn is set and valid
     if not is_valid_environment():

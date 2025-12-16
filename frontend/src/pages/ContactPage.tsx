@@ -6,6 +6,7 @@ import VideoLoader from '../components/VideoLoader';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReCAPTCHA from '../components/ReCAPTCHA';
+import { getBaseUrl } from '../utils/helpers';
 
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -38,7 +39,7 @@ const ContactPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const baseUrl = getBaseUrl(); 
       const response = await fetch(`${baseUrl}/api/contact/email`, {
         method: 'POST',
         headers: {
