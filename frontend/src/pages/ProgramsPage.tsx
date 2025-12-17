@@ -38,7 +38,7 @@ const ProgramsPage: React.FC = () => {
       focus: 'Hypertrophy'
     },
     {
-      id: 6,
+      id: 17,
       title: 'Project Genesis (17 Week Prep Program)',
       description: 'My full workout regimen, nutrition guide and preparation for my first bodybuilding competition.',
       image: `${import.meta.env.PROD ? '/static/' : ''}images/program_genesis_high_res_2.jpeg`,

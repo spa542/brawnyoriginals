@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
+from app.utilities.rate_limiter import limiter, export_rate_limit_exceeded_handler, export_RateLimitExceeded as RateLimitExceeded
 import uvicorn
 
 from app.routers import core_router, health_router, utility_router, payments_router
@@ -73,6 +74,10 @@ def create_app() -> FastAPI:
         request: Request, exc: Exception
     ) -> JSONResponse:
         """Handle all other exceptions"""
+        # Handle rate limit exceeded
+        if isinstance(exc, RateLimitExceeded):
+            return _rate_limit_exceeded_handler(request, exc)
+            
         return JSONResponse(
             status_code=500,
             content=ErrorResponse(
@@ -82,10 +87,14 @@ def create_app() -> FastAPI:
             ).model_dump()
         )
     
+    # Configure rate limiter in the app
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, export_rate_limit_exceeded_handler)
+    
     # Include routers
     app.include_router(core_router.router)
     app.include_router(health_router.router, prefix="/api")
-    app.include_router(utility_router.router, prefix="/api") 
+    app.include_router(utility_router.router, prefix="/api")
     app.include_router(payments_router.router, prefix="/api") 
 
     # Check that environmetn is set and valid

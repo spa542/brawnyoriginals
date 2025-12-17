@@ -16,7 +16,6 @@ const ContactPage: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRecaptcha, setShowRecaptcha] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleRecaptchaVerify = useCallback((token: string) => {
     handleFormSubmission(token);
@@ -24,7 +23,6 @@ const ContactPage: React.FC = () => {
 
   const handleFormSubmission = async (token: string) => {
     setIsSubmitting(true);
-    setError(null);
     
     try {
       const baseUrl = getBaseUrl(); 
@@ -64,10 +62,9 @@ const ContactPage: React.FC = () => {
       setFormData({ name: '', email: '', message: '' });
       setShowRecaptcha(false);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
       console.error('Error submitting form:', err);
       
+      // Show error message 
       toast.error(
         'Sorry, we couldn\'t send your message. \nPlease try again later.',
         {
@@ -173,11 +170,6 @@ const ContactPage: React.FC = () => {
                 <a href="https://policies.google.com/privacy" className="text-tertiary-600 hover:underline ml-1">Privacy Policy</a> and
                 <a href="https://policies.google.com/terms" className="text-tertiary-600 hover:underline ml-1">Terms of Service</a> apply.
               </div>
-              {error && (
-                <div className="text-red-500 text-sm p-3 bg-red-50 rounded-md">
-                  {error}
-                </div>
-              )}
               <button
                 type="submit"
                 disabled={isSubmitting}

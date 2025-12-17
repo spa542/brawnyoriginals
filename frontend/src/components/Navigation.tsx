@@ -12,7 +12,7 @@ const Navigation: React.FC = () => {
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showRecaptcha, setShowRecaptcha] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showError, setShowError] = useState(false);
   const cartRef = useRef<HTMLDivElement>(null);
 
   // Close cart when clicking outside
@@ -50,8 +50,6 @@ const Navigation: React.FC = () => {
     
     try {
       setIsCheckingOut(true);
-      setError(null);
-
       const price_ids = cartItems.map(item => item.priceId);
       
       // Generate token with all items
@@ -103,7 +101,7 @@ const Navigation: React.FC = () => {
       
     } catch (err) {
       console.error('Checkout error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to process checkout. Please try again.');
+      setShowError(true);
       setIsCheckingOut(false);
       // Reset recaptcha on error to allow retry
       setRecaptchaToken('');
@@ -114,7 +112,7 @@ const Navigation: React.FC = () => {
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
     
-    setError(null);
+    setShowError(false);
     
     if (!recaptchaToken) {
       // Show recaptcha if we don't have a token yet
@@ -267,9 +265,9 @@ const Navigation: React.FC = () => {
                           )}
                         </button>
                       </div>
-                      {error && (
-                        <div className="text-red-500 text-sm mt-2">
-                          {error}
+                      {showError && (
+                        <div className="mt-3 text-center text-red-600 text-sm">
+                          Checkout failed. Please try again or contact support if the issue persists.
                         </div>
                       )}
                     </div>

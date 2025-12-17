@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, status, HTTPException, BackgroundTasks
 import stripe
 
+from app.utilities.rate_limiter import limiter
 from app.controllers import payments_controller
 from app.models.payments_model import (
     CheckoutTokenRequest,
@@ -29,9 +30,10 @@ router = APIRouter()
     necessary checkout parameters and is signed to prevent tampering.
     """
 )
+@limiter.limit("10/minute")
 async def generate_token(
-    token_request: CheckoutTokenRequest,
-    request: Request
+    request: Request,
+    token_request: CheckoutTokenRequest
 ) -> CheckoutTokenResponse:
     """
     Generate a secure token for creating a checkout session.
@@ -97,14 +99,17 @@ async def generate_token(
     response_model=CheckoutSessionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new checkout session",
-    description="""Creates a new Stripe Checkout Session using a secure token and returns the session URL for redirection.
+    description="""Creates a new Stripe Checkout Session using a pre-authorized token.
     
-    This endpoint requires a valid token obtained from the /payments/generate-token endpoint.
-    The token should be included in the request body along with the price_id and URLs.
+    This endpoint validates the provided token and creates a new Stripe Checkout Session
+    with the specified price IDs. The token must be obtained from the generate-token
+    endpoint and must not be expired.
     """
 )
+@limiter.limit("10/minute")
 async def create_checkout_session(
-    request: CreateCheckoutSessionRequest
+    request: Request,
+    checkout_request: CreateCheckoutSessionRequest 
 ) -> CheckoutSessionResponse:
     """
     Create a new checkout session for payment processing using a secure token.
@@ -126,19 +131,19 @@ async def create_checkout_session(
     try:
         # Create the checkout session with the provided request data
         response = await payments_controller.create_checkout_session(
-            token=request.token,
-            price_ids=request.price_ids,
-            quantity=request.quantity,
-            success_url=str(request.success_url),
-            cancel_url=str(request.cancel_url)
+            token=checkout_request.token,
+            price_ids=checkout_request.price_ids,
+            quantity=checkout_request.quantity,
+            success_url=str(checkout_request.success_url),
+            cancel_url=str(checkout_request.cancel_url)
         )
         
         logger.info(
             "Created checkout session",
             extra={
                 "session_id": response.session_id,
-                "price_ids": request.price_ids,
-                "quantity": request.quantity
+                "price_ids": checkout_request.price_ids,
+                "quantity": checkout_request.quantity
             }
         )
         return response
@@ -160,7 +165,6 @@ async def create_checkout_session(
         )
 
 
-# TODO: Add background tasks here to handle and fulfill orders quickly while returnign a quick response
 @router.post(
     "/payments/stripe/webhook",
     response_model=WebhookResponse,
