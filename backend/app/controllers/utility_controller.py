@@ -1,15 +1,11 @@
-import os
-import requests
 from typing import Dict, Any
 
 from fastapi import HTTPException, status
 
-from app.utilities.helpers import is_dev, get_cfg
-from app.models.utility_model import SendEmailResponse, VideoResponse
-from app.utilities.recaptcha import verify_recaptcha_token
+from app.models.utility_model import SendContactEmailResponse, VideoResponse
 from app.utilities.logger import get_logger
-from app.utilities.doppler_utils import get_doppler_secret
 from app.utilities.youtube_utils import get_latest_short, get_latest_video
+from app.utilities.email import send_email_util
 
 
 async def scrape_latest_youtube_video() -> VideoResponse:
@@ -106,7 +102,7 @@ def scrape_latest_tiktok_video() -> Dict[str, Any]:
         raise
 
 
-async def send_email(name: str, email: str, message: str, g_recaptcha_response: str) -> Dict[str, Any]:
+async def send_contact_email(name: str, email: str, message: str) -> Dict[str, Any]:
     """
     Send email to the specified email address.
     
@@ -114,75 +110,25 @@ async def send_email(name: str, email: str, message: str, g_recaptcha_response: 
         name: Name of the sender
         email: Email address of the sender
         message: Email message content
-        g_recaptcha_response: reCAPTCHA response token
+        
     Returns:
         Dict containing status and message
         
     Raises:
-        ValueError: If there's an error sending the email
+        HTTPException: If there's an error sending the email
     """
     logger = get_logger(__name__)
     logger.info("Processing email send request", extra={"email": email})
     
-    # Verify reCAPTCHA token
     try:
-        is_valid = await verify_recaptcha_token(g_recaptcha_response)
-        if not is_valid:
-            logger.warning("reCAPTCHA verification failed", extra={"email": email})
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="reCAPTCHA verification failed"
-            )
-        logger.debug("reCAPTCHA verification successful", extra={"email": email})
+        response = await send_email_util(name, email, message, mode="contact")
+        return SendContactEmailResponse(**response)
+    except HTTPException:
+        # Re-raise HTTP exceptions from the utility
+        raise
     except Exception as e:
-        logger.error("Error during reCAPTCHA verification", exc_info=True, extra={"email": email})
+        logger.error(f"Unexpected error in send_contact_email: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error during reCAPTCHA verification"
-        )
-
-    # Get config file
-    cfg = get_cfg()
-    # Setup email variables
-    url = cfg.get("MAILGUN", "url")
-    email_from = ("Mailgun Sandbox" if is_dev() else "Mailgun Production") + f" <{cfg.get('MAILGUN', 'from_uri')}>"
-    email_to = cfg.get("MAILGUN", "contact_email")
-
-    try:
-        mailgun_api_key = await get_doppler_secret("MAILGUN_API_KEY")
-        auth = ("api", mailgun_api_key)
-    except Exception as e:
-        logger.error(f"Failed to get Mailgun API key from Doppler: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Email service configuration error"
-        )
-        
-    try:
-        # TODO Adjust email message based on type of email being sent
-        data = {
-            "from": email_from,
-            "to": email_to,
-            "subject": f"Brawny Originals - Contact Form - Message from {name} <{email}>",
-            "text": message
-        }
-
-        logger.debug("Sending email", extra={"to": email_to, "subject": data["subject"]})
-        
-        # Send the email
-        response = requests.post(url, auth=auth, data=data, timeout=10)
-        response.raise_for_status()
-        
-        logger.info("Email sent successfully", extra={"to": email_to, "email": email})
-        
-        return SendEmailResponse(
-            status="success",
-            message="Email sent successfully"
-        )
-        
-    except requests.exceptions.RequestException as e:
-        logger.error("Failed to send email", exc_info=True, extra={"email": email, "to": email_to})
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send email"
+            detail="An unexpected error occurred while sending the email"
         )

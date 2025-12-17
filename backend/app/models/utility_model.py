@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 
 # Request models
 
-class SendEmailRequest(BaseModel):
+class SendContactEmailRequest(BaseModel):
     """Request model for sending email endpoints""" 
     name: str
     email: EmailStr
@@ -18,7 +18,7 @@ class VideoResponse(BaseModel):
     video_id: str
 
 
-class SendEmailResponse(BaseModel):
+class SendContactEmailResponse(BaseModel):
     """Response model for sending email endpoints"""
     status: str
     message: str

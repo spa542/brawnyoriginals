@@ -1,22 +1,25 @@
-from typing import Dict, List
+from typing import List
 from fastapi import HTTPException, status, Request
+from pathlib import Path
 
 import stripe
 
 from app.models.payments_model import (
     CheckoutSessionResponse,
-    WebhookResponse,
     CheckoutTokenRequest,
     CheckoutTokenResponse,
-    CheckoutTokenData
+    CheckoutTokenData,
+    PdfAttachment, 
+    PROGRAM_PI_MAPPING,
+    FULFILLMENT_EMAIL_BODY 
 )
 from app.utilities.logger import get_logger
 from app.utilities.doppler_utils import get_doppler_secret
 from app.utilities.hmac import generate_hmac_token, verify_hmac_token
 from app.utilities.helpers import get_cfg
+from app.utilities.email import send_email_util
 
 
-# Configure Stripe with secret from Doppler and version from config
 async def get_stripe_client():
     """
     Get configured Stripe client with API key from Doppler and version from config.
@@ -176,6 +179,11 @@ async def create_checkout_session(
             'price': price_id,
             'quantity': quantity,
         } for price_id in price_ids]
+
+        # Save file names of the programs based on price_id to fulfill later 
+        fulfillment_dict = {}
+        for i, price_id in enumerate(price_ids):
+            fulfillment_dict[str(i)] = PROGRAM_PI_MAPPING[price_id]
         
         # Get payment method configuration ID from config
         cfg = get_cfg()
@@ -187,7 +195,10 @@ async def create_checkout_session(
             'mode': 'payment',
             'success_url': str(success_url),
             'cancel_url': str(cancel_url),
-            'payment_method_configuration': payment_method_config_id
+            'payment_method_configuration': payment_method_config_id,
+            'payment_intent_data': {
+                'metadata': fulfillment_dict
+            }
         }
         
         # Create the Stripe checkout session
@@ -325,27 +336,97 @@ async def handle_webhook(request: Request) -> None:
 
 
 async def handle_payment_intent_succeeded(payment_intent: stripe.PaymentIntent) -> None:
-    """Handle successful payment intent."""
+    """
+    Handle successful payment intent by sending purchased programs to customer.
+    
+    Args:
+        payment_intent: The Stripe PaymentIntent object
+        
+    Raises:
+        Exception: If there's an error processing the fulfillment
+    """
     logger = get_logger(__name__)
     try:
-        # TODO UPDATE LOGGING HERE 
         logger.info(
-            "Payment intent succeeded",
+            "Processing payment fulfillment",
             extra={
                 "payment_intent_id": payment_intent.id,
                 "amount": payment_intent.amount,
                 "currency": payment_intent.currency,
-                "customer": payment_intent.customer
+                "customer": payment_intent.customer,
+                "metadata": payment_intent.metadata
             }
         )
         
-        # TODO: Add your business logic here
-        # Example: Update order status, fulfill order, etc.
+        # Get customer email from payment intent
+        if not hasattr(payment_intent, 'receipt_email') or not payment_intent.receipt_email:
+            logger.error("No email found in payment intent", extra={"payment_intent_id": payment_intent.id})
+            raise ValueError("No email found in payment intent")
+            
+        # Get program files from metadata
+        if not hasattr(payment_intent, 'metadata') or not payment_intent.metadata:
+            logger.error("No metadata found in payment intent", extra={"payment_intent_id": payment_intent.id})
+            raise ValueError("No program information found in payment")
+            
+        # Get the email
+        customer_email = payment_intent.receipt_email
+
+        # Get the current directory and construct the programs directory path
+        current_dir = Path(__file__).parent
+        programs_dir = current_dir.parent / "static" / "programs"
+        
+        # Create PdfAttachment objects for each program file
+        pdf_attachments = []
+        for file_name in payment_intent.metadata.values():
+            file_path = programs_dir / file_name
+            if not file_path.exists():
+                logger.warning(f"Program file not found at path {file_path}", 
+                                extra={"file_path": str(file_path), "payment_intent_id": payment_intent.id, "file_name": file_name})
+                continue
+            try:
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                    pdf_attachment = PdfAttachment(
+                        filename=file_name,
+                        content=content,
+                        content_type="application/pdf"
+                    )
+                    pdf_attachments.append(pdf_attachment)
+                    logger.info("Added program file for delivery", 
+                                extra={"file_name": file_name, "payment_intent_id": payment_intent.id})
+            except Exception as e:
+                logger.error("Error reading program file", 
+                            extra={"file_path": str(file_path), "error": str(e)},
+                            exc_info=True)
+                continue
+        
+        if not pdf_attachments:
+            logger.error("No valid program files found for delivery", 
+                        extra={"payment_intent_id": payment_intent.id})
+            raise ValueError("No valid program files found for delivery")
+        
+        # Send email with attached programs
+        email_body = FULFILLMENT_EMAIL_BODY
+        
+        await send_email_util(
+            name="Brawny Originals Customer",
+            email=customer_email,
+            message=email_body,
+            files=pdf_attachments,
+            mode="fulfillment",
+            is_html=True
+        )
+        
+        logger.info("Successfully sent programs to customer", 
+                    extra={"payment_intent_id": payment_intent.id, "email": customer_email})
         
     except Exception as e:
         logger.error(
             "Error handling payment_intent.succeeded",
-            extra={"payment_intent_id": payment_intent.id},
+            extra={
+                "payment_intent_id": getattr(payment_intent, 'id', 'unknown'),
+                "error": str(e)
+            },
             exc_info=True
         )
         raise

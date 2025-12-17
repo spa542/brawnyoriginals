@@ -1,5 +1,5 @@
 from pydantic import BaseModel, HttpUrl, field_validator
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 from datetime import datetime, timezone
 from app.utilities.helpers import get_cfg
 
@@ -126,3 +126,109 @@ class CheckoutTokenData(BaseModel):
     def is_expired(self) -> bool:
         """Check if the token has expired."""
         return datetime.now(timezone.utc).timestamp() > self.expires_at
+
+
+class PdfAttachment(BaseModel):
+    """Model for PDF attachments in payment intents."""
+    filename: str
+    content: bytes
+    content_type: Literal['application/pdf']
+
+
+# NOTE: Update regularly as is required for payment intent fulfillment
+PROGRAM_PI_MAPPING = {
+    "price_1ScWdxK5tsm2JTU1Zogy9QKZ": "Program_Blue.pdf",  # Development
+    "price_1Sf0Jj2cxMNEOVDK1vgR9A6A": "Program_Blue.pdf",  # Production
+    "price_1ScWd9K5tsm2JTU1tjTXlwc8": "Program_Genesis.pdf",  # Development
+    "price_1Sf0Js2cxMNEOVDKqVYTmhvZ": "Program_Genesis.pdf"  # Production
+}
+
+
+FULFILLMENT_EMAIL_BODY = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                background-color: #1a1a1a;
+                padding: 20px;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .header h1 {
+                color: #ffffff;
+                margin: 0;
+                font-size: 24px;
+            }
+            .content {
+                background-color: #f9f9f9;
+                padding: 25px;
+                border-radius: 5px;
+            }
+            .footer {
+                margin-top: 30px;
+                font-size: 14px;
+                color: #666666;
+                text-align: center;
+                padding-top: 20px;
+                border-top: 1px solid #eeeeee;
+            }
+            .button {
+                display: inline-block;
+                background-color: #1a1a1a;
+                color: #ffffff !important;
+                padding: 12px 25px;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 20px 0;
+                font-weight: bold;
+            }
+            .program-list {
+                margin: 20px 0;
+                padding: 0;
+                list-style: none;
+            }
+            .program-item {
+                background: white;
+                margin: 10px 0;
+                padding: 15px;
+                border-radius: 4px;
+                border-left: 4px solid #1a1a1a;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Your Brawny Originals Order Details</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Thank you for your purchase!</h2>
+            <p>Your order has been processed and we are excited to provide you with the following program(s) attached to help you on your fitness journey.</p>
+            
+            <p>To get started, simply download the attached program files. Each program includes detailed instructions and workout plans to help you achieve your fitness goals.</p>
+            
+            <p>If you have any questions about your programs or need assistance, please visit our <a href="https://www.brawnyoriginals.com/#/contact">contact page</a> to get in touch with our support team.</p>
+            
+            <p>Stay strong,</p>
+            <p><strong>The Brawny Originals Team</strong></p>
+
+            <p style="color: #666666; font-size: 12px; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eeeeee;">
+                <em>Please note: This is an automated message. Please do not reply to this email. For assistance, please visit our <a href="https://www.brawnyoriginals.com/#/contact" style="color: #1a1a1a;">contact page</a>.</em>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 Brawny Originals. All rights reserved.</p>
+        </div>
+    </body>
+    </html>
+"""
