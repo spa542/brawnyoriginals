@@ -75,19 +75,11 @@ async def verify_recaptcha_token(token: str) -> bool:
                 
                 if not result['success']:
                     error_codes = result.get('error-codes', [])
-                    logger.warning(
-                        "reCAPTCHA verification failed. Error codes: %s", 
-                        error_codes,
-                        extra={"error_codes": error_codes}
-                    )
+                    logger.warning(f"reCAPTCHA verification failed. Error codes: {error_codes}")
                     return False
                 
                 score = result.get('score', 0)
-                logger.info(
-                    "reCAPTCHA verification successful. Score: %s", 
-                    score,
-                    extra={"score": score}
-                )
+                logger.info(f"reCAPTCHA verification successful. Score: {score}")
                 
                 # Bypass reCAPTCHA verification in development mode if is_dev() - Letting the above code run for testing purposes
                 if is_dev():
@@ -97,21 +89,12 @@ async def verify_recaptcha_token(token: str) -> bool:
                 return score >= 0.5  # Adjust threshold as needed
                 
             except ValueError as e:
-                logger.error(
-                    "Error parsing reCAPTCHA response: %s. Response content: %s", 
-                    str(e), 
-                    response.text,
-                    exc_info=True
-                )
+                logger.error(f"Error parsing reCAPTCHA response: {str(e)}. Response content: {response.text}")
                 return False
                 
     except httpx.TimeoutException:
         logger.error("reCAPTCHA verification request timed out")
         return False
     except Exception as e:
-        logger.error(
-            "Unexpected error during reCAPTCHA verification", 
-            exc_info=True,
-            extra={"error": str(e), "error_type": type(e).__name__}
-        )
+        logger.error(f"Unexpected error during reCAPTCHA verification - Error: {str(e)}, Type: {type(e).__name__}")
         return False

@@ -62,7 +62,7 @@ async def generate_token(
         captcha_valid = await verify_recaptcha_token(token_request.captcha_token)
         
         if not captcha_valid:
-            logger.warning("CAPTCHA validation failed", extra={"remote_ip": request.client.host if request.client else None})
+            logger.warning(f"CAPTCHA validation failed - Remote IP: {request.client.host if request.client else 'Unknown'}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired CAPTCHA token"
@@ -72,21 +72,17 @@ async def generate_token(
         response = await payments_controller.generate_checkout_token(token_request)
         
         logger.info(
-            "Generated checkout token",
-            extra={"price_ids": token_request.price_ids, "expires_at": response.expires_at}
+            f"Generated checkout token - Price IDs: {token_request.price_ids}, Expires At: {response.expires_at}"
         )
         return response
     except HTTPException as e:
         logger.warning(
-            "Checkout token generation failed",
-            extra={"status_code": e.status_code}
+            f"Checkout token generation failed - Status Code: {e.status_code}"
         )
         raise
     except Exception as e:
         logger.error(
-            "Failed to generate checkout token",
-            exc_info=True,
-            extra={"price_ids": getattr(token_request, 'price_ids', [])}
+            f"Failed to generate checkout token - Price IDs: {getattr(token_request, 'price_ids', [])}"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -139,25 +135,17 @@ async def create_checkout_session(
         )
         
         logger.info(
-            "Created checkout session",
-            extra={
-                "session_id": response.session_id,
-                "price_ids": checkout_request.price_ids,
-                "quantity": checkout_request.quantity
-            }
+            f"Created checkout session - Session ID: {response.session_id}, Price IDs: {checkout_request.price_ids}, Quantity: {checkout_request.quantity}"
         )
         return response
     except HTTPException as e:
         logger.warning(
-            "Checkout session creation processing failed",
-            extra={"status_code": e.status_code}
+            f"Checkout session creation processing failed - Status Code: {e.status_code}"
         )
         raise
     except Exception as e:
         logger.error(
-            "Failed to create checkout session",
-            exc_info=True,
-            extra={"error": str(e)}
+            f"Failed to create checkout session - Error: {str(e)}"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -203,10 +191,10 @@ async def webhook_handler(background_tasks: BackgroundTasks, request: Request) -
             # Store the event for future processing in the background task
             request.state.event = event
         except ValueError as e:
-            logger.warning("Invalid Stripe webhook payload", exc_info=True)
+            logger.warning("Invalid Stripe webhook payload")
             raise HTTPException(status_code=400, detail="Invalid payload") from e
         except stripe.error.SignatureVerificationError as e:
-            logger.warning("Invalid Stripe signature", exc_info=True)
+            logger.warning("Invalid Stripe signature")
             raise HTTPException(status_code=400, detail="Invalid signature") from e
         
         # Queue the webhook processing in the background
@@ -221,15 +209,14 @@ async def webhook_handler(background_tasks: BackgroundTasks, request: Request) -
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Unexpected error in webhook handler", exc_info=True)
+        logger.error("Unexpected error in webhook handler")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         ) from e
     except Exception as e:
         logger.error(
-            "Webhook processing error",
-            exc_info=True
+            "Webhook processing error"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

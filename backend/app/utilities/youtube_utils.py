@@ -153,7 +153,7 @@ async def get_channel_id(channel_name: str = CHANNEL_NAME) -> Optional[str]:
             detail="Failed to fetch channel information from YouTube"
         )
     except Exception as e:
-        logger.error(f"Unexpected error getting channel ID: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error getting channel ID: {str(e)}")
         raise
 
 
@@ -261,7 +261,7 @@ async def get_latest_videos(channel_id: str, is_short: bool = False) -> Optional
 
             return None
     except Exception as e:
-        logger.error(f"Unexpected error fetching videos: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error fetching videos: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while fetching videos"

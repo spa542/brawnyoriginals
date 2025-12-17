@@ -52,10 +52,7 @@ class DopplerSecrets:
             self._logger.error(f"Failed to load Doppler config: {str(e)}")
             raise ValueError("Invalid Doppler configuration in config file") from e
         
-        self._logger.debug(
-            "Doppler client initialized",
-            extra={"project": self.project, "config": self.config}
-        )
+        self._logger.debug(f"Doppler client initialized - Project: {self.project}, Config: {self.config}")
 
     async def get_secret(self, secret_name: str) -> str:
         """

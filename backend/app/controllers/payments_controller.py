@@ -40,13 +40,10 @@ async def get_stripe_client():
         cfg = get_cfg()
         stripe.api_version = cfg.get('STRIPE', 'api_version')
         
-        logger.debug("Initialized Stripe client", 
-                    extra={"api_version": stripe.api_version})
+        logger.debug(f"Initialized Stripe client with API version: {stripe.api_version}")
         return stripe
     except Exception as e:
-        logger.error("Failed to initialize Stripe client", 
-                    exc_info=True,
-                    extra={"error": str(e)})
+        logger.error(f"Failed to initialize Stripe client: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to initialize payment processor"
@@ -83,7 +80,7 @@ async def get_token_data(token: str) -> CheckoutTokenData:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Token validation failed: {str(e)}", exc_info=True)
+        logger.error(f"Token validation failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
@@ -114,7 +111,7 @@ async def generate_checkout_token(
         # Generate HMAC token
         token = await generate_hmac_token(token_data.model_dump())
         
-        logger.info("Generated checkout token", extra={"expires_at": token_data.expires_at})
+        logger.info(f"Generated checkout token - Expires at: {token_data.expires_at}")
         
         return CheckoutTokenResponse(
             token=token,
@@ -122,7 +119,7 @@ async def generate_checkout_token(
         )
         
     except Exception as e:
-        logger.error("Error generating checkout token", exc_info=True)
+        logger.error("Error generating checkout token")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error generating checkout token"
@@ -165,13 +162,7 @@ async def create_checkout_session(
         price_ids = token_data.price_ids
             
         logger.info(
-            "Creating checkout session",
-            extra={
-                "price_ids": price_ids,
-                "quantity": quantity,
-                "success_url": success_url,
-                "cancel_url": cancel_url
-            }
+            f"Creating checkout session - Price IDs: {price_ids}, Quantity: {quantity}, Success URL: {success_url}, Cancel URL: {cancel_url}"
         )
         
         # Create line items for each price ID
@@ -204,7 +195,7 @@ async def create_checkout_session(
         # Create the Stripe checkout session
         session = stripe.checkout.Session.create(**session_params)
         
-        logger.info("Created checkout session", extra={"session_id": session.id})
+        logger.info(f"Created checkout session - Session ID: {session.id}")
         
         return CheckoutSessionResponse(
             session_id=session.id,
@@ -216,13 +207,13 @@ async def create_checkout_session(
     except HTTPException:
         raise
     except stripe.error.StripeError as e:
-        logger.error("Stripe API error", exc_info=True, extra={"error": str(e)})
+        logger.error(f"Stripe API error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
-        logger.error("Error creating checkout session", exc_info=True)
+        logger.error("Error creating checkout session")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while creating the checkout session"
@@ -246,12 +237,7 @@ async def handle_webhook(request: Request) -> None:
         event = request.state.event
         
         logger.info(
-            "Processing webhook event in background",
-            extra={
-                "event_id": event.id,
-                "event_type": event.type,
-                "livemode": event.livemode
-            }
+            f"Processing webhook event in background - Event ID: {event.id}, Type: {event.type}, Live Mode: {event.livemode}"
         )
         
         # Handle the event based on its type
@@ -259,19 +245,13 @@ async def handle_webhook(request: Request) -> None:
             # Fulfill the order!
             payment_intent = event.data.object
             logger.info(
-                "Payment intent succeeded",
-                extra={
-                    "payment_intent_id": payment_intent.id,
-                    "amount_received": getattr(payment_intent, 'amount_received', None),
-                    "currency": getattr(payment_intent, 'currency', None),
-                    "customer_id": getattr(payment_intent, 'customer', None),
-                    "payment_method": getattr(payment_intent, 'payment_method', None),
-                    "metadata": dict(getattr(payment_intent, 'metadata', {})),
-                    "charges": {
-                        'count': len(getattr(payment_intent, 'charges', {}).get('data', [])),
-                        'amounts': [c.get('amount') for c in getattr(payment_intent, 'charges', {}).get('data', []) if 'amount' in c]
-                    } if hasattr(payment_intent, 'charges') else None
-                }
+                f"Payment intent succeeded - "
+                f"ID: {payment_intent.id}, "
+                f"Amount: {getattr(payment_intent, 'amount_received', 'N/A')} "
+                f"{getattr(payment_intent, 'currency', '')}, "
+                f"Customer: {getattr(payment_intent, 'customer', 'N/A')}, "
+                f"Method: {getattr(payment_intent, 'payment_method', 'N/A')}, "
+                f"Charges: {len(getattr(payment_intent, 'charges', {}).get('data', []))} (Amounts: {[c.get('amount') for c in getattr(payment_intent, 'charges', {}).get('data', []) if 'amount' in c]})"
             )
             await handle_payment_intent_succeeded(payment_intent)
             
@@ -279,59 +259,45 @@ async def handle_webhook(request: Request) -> None:
             # Log completed checkout session for bookkeeping
             session = event.data.object
             logger.info(
-                "Checkout session completed",
-                extra={
-                    "session_id": session.id,
-                    "customer_email": getattr(session, 'customer_email', None),
-                    "payment_intent": getattr(session, 'payment_intent', None),
-                    "amount_total": getattr(session, 'amount_total', None),
-                    "currency": getattr(session, 'currency', None)
-                }
+                f"Checkout session completed - "
+                f"Session ID: {session.id}, "
+                f"Email: {getattr(session, 'customer_email', 'N/A')}, "
+                f"Payment Intent: {getattr(session, 'payment_intent', 'N/A')}, "
+                f"Amount: {getattr(session, 'amount_total', 'N/A')} "
+                f"{getattr(session, 'currency', '')}"
             )
             
         elif event.type == 'checkout.session.expired':
             # Log expired checkout session for bookkeeping
             session = event.data.object
             logger.info(
-                "Checkout session expired",
-                extra={
-                    "session_id": session.id,
-                    "customer_email": getattr(session, 'customer_email', None),
-                    "expires_at": getattr(session, 'expires_at', None)
-                }
+                f"Checkout session expired - "
+                f"Session ID: {session.id}, "
+                f"Email: {getattr(session, 'customer_email', 'N/A')}, "
+                f"Expires At: {getattr(session, 'expires_at', 'N/A')}"
             )
             
         elif event.type == 'payment_intent.payment_failed':
             # Log failed payment for bookkeeping
             payment_intent = event.data.object
             logger.warning(
-                "Payment failed",
-                extra={
-                    "payment_intent_id": payment_intent.id,
-                    "amount": getattr(payment_intent, 'amount', None),
-                    "currency": getattr(payment_intent, 'currency', None),
-                    "failure_code": getattr(payment_intent, 'last_payment_error', {})
-                                    .get('code', None) if hasattr(payment_intent, 'last_payment_error') else None,
-                    "failure_message": getattr(payment_intent, 'last_payment_error', {})
-                                    .get('message', None) if hasattr(payment_intent, 'last_payment_error') else None
-                }
+                f"Payment failed - "
+                f"Payment Intent ID: {payment_intent.id}, "
+                f"Amount: {getattr(payment_intent, 'amount', 'N/A')} "
+                f"{getattr(payment_intent, 'currency', '')}, "
+                f"Failure Code: {getattr(payment_intent, 'last_payment_error', {}).get('code', 'N/A')}, "
+                f"Message: {getattr(payment_intent, 'last_payment_error', {}).get('message', 'N/A')}"
             )
         else:
-            logger.debug(
-                "Received unhandled event type",
-                extra={"event_type": event.type}
-            )
+            logger.debug(f"Received unhandled event type: {event.type}")
             
     except Exception as e:
         logger.error(
-            "Error processing webhook event",
-            extra={
-                "event_type": getattr(event, 'type', 'unknown'),
-                "event_id": getattr(event, 'id', 'unknown'),
-                "error": str(e),
-                "error_type": type(e).__name__
-            },
-            exc_info=True
+            f"Error processing webhook event - "
+            f"Type: {getattr(event, 'type', 'unknown')}, "
+            f"ID: {getattr(event, 'id', 'unknown')}, "
+            f"Error: {str(e)}, "
+            f"Error Type: {type(e).__name__}"
         )
 
 
@@ -348,24 +314,21 @@ async def handle_payment_intent_succeeded(payment_intent: stripe.PaymentIntent) 
     logger = get_logger(__name__)
     try:
         logger.info(
-            "Processing payment fulfillment",
-            extra={
-                "payment_intent_id": payment_intent.id,
-                "amount": payment_intent.amount,
-                "currency": payment_intent.currency,
-                "customer": payment_intent.customer,
-                "metadata": payment_intent.metadata
-            }
+            f"Processing payment fulfillment - "
+            f"Payment Intent ID: {payment_intent.id}, "
+            f"Amount: {payment_intent.amount} {payment_intent.currency}, "
+            f"Customer: {payment_intent.customer}, "
+            f"Metadata: {payment_intent.metadata}"
         )
         
         # Get customer email from payment intent
         if not hasattr(payment_intent, 'receipt_email') or not payment_intent.receipt_email:
-            logger.error("No email found in payment intent", extra={"payment_intent_id": payment_intent.id})
+            logger.error(f"No email found in payment intent - Payment Intent ID: {payment_intent.id}")
             raise ValueError("No email found in payment intent")
             
         # Get program files from metadata
         if not hasattr(payment_intent, 'metadata') or not payment_intent.metadata:
-            logger.error("No metadata found in payment intent", extra={"payment_intent_id": payment_intent.id})
+            logger.error(f"No metadata found in payment intent - Payment Intent ID: {payment_intent.id}")
             raise ValueError("No program information found in payment")
             
         # Get the email
@@ -380,8 +343,7 @@ async def handle_payment_intent_succeeded(payment_intent: stripe.PaymentIntent) 
         for file_name in payment_intent.metadata.values():
             file_path = programs_dir / file_name
             if not file_path.exists():
-                logger.warning(f"Program file not found at path {file_path}", 
-                                extra={"file_path": str(file_path), "payment_intent_id": payment_intent.id, "file_name": file_name})
+                logger.warning(f"Program file not found - Path: {file_path}, File: {file_name}, Payment Intent ID: {payment_intent.id}")
                 continue
             try:
                 with open(file_path, 'rb') as f:
@@ -392,17 +354,13 @@ async def handle_payment_intent_succeeded(payment_intent: stripe.PaymentIntent) 
                         content_type="application/pdf"
                     )
                     pdf_attachments.append(pdf_attachment)
-                    logger.info("Added program file for delivery", 
-                                extra={"file_name": file_name, "payment_intent_id": payment_intent.id})
+                    logger.info(f"Added program file for delivery - File: {file_name}, Payment Intent ID: {payment_intent.id}")
             except Exception as e:
-                logger.error("Error reading program file", 
-                            extra={"file_path": str(file_path), "error": str(e)},
-                            exc_info=True)
+                logger.error(f"Error reading program file - Path: {file_path}, Error: {str(e)}")
                 continue
         
         if not pdf_attachments:
-            logger.error("No valid program files found for delivery", 
-                        extra={"payment_intent_id": payment_intent.id})
+            logger.error(f"No valid program files found for delivery - Payment Intent ID: {payment_intent.id}")
             raise ValueError("No valid program files found for delivery")
         
         # Send email with attached programs
@@ -417,16 +375,12 @@ async def handle_payment_intent_succeeded(payment_intent: stripe.PaymentIntent) 
             is_html=True
         )
         
-        logger.info("Successfully sent programs to customer", 
-                    extra={"payment_intent_id": payment_intent.id, "email": customer_email})
+        logger.info(f"Successfully sent programs to customer - Payment Intent ID: {payment_intent.id}, Email: {customer_email}")
         
     except Exception as e:
         logger.error(
-            "Error handling payment_intent.succeeded",
-            extra={
-                "payment_intent_id": getattr(payment_intent, 'id', 'unknown'),
-                "error": str(e)
-            },
-            exc_info=True
+            f"Error handling payment_intent.succeeded - "
+            f"Payment Intent ID: {getattr(payment_intent, 'id', 'unknown')}, "
+            f"Error: {str(e)}"
         )
         raise

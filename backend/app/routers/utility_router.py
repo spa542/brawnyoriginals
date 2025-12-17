@@ -23,10 +23,10 @@ async def retrieve_latest_youtube_video():
     logger.info("Fetching latest YouTube video")
     try:
         result = await uc.scrape_latest_youtube_video()
-        logger.debug("Successfully fetched YouTube video", extra={"video_id": result.video_id})
+        logger.debug(f"Successfully fetched YouTube video - Video ID: {result.video_id}")
         return result
     except Exception as e:
-        logger.error("Failed to fetch YouTube video", exc_info=True)
+        logger.error("Failed to fetch YouTube video")
         raise
 
 
@@ -42,10 +42,10 @@ async def retrieve_latest_youtube_short():
     logger.info("Fetching latest YouTube short")
     try:
         result = await uc.scrape_latest_youtube_short()
-        logger.debug("Successfully fetched YouTube short", extra={"video_id": result.video_id})
+        logger.debug(f"Successfully fetched YouTube short - Video ID: {result.video_id}")
         return result
     except Exception as e:
-        logger.error("Failed to fetch YouTube short", exc_info=True)
+        logger.error("Failed to fetch YouTube short")
         raise
 
 
@@ -61,10 +61,10 @@ async def retrieve_latest_tiktok():
     logger.info("Fetching latest TikTok video")
     try:
         result = uc.scrape_latest_tiktok_video()
-        logger.debug("Successfully fetched TikTok video", extra={"video_id": result.video_id})
+        logger.debug(f"Successfully fetched TikTok video - Video ID: {result.video_id}")
         return result
     except Exception as e:
-        logger.error("Failed to fetch TikTok video", exc_info=True)
+        logger.error("Failed to fetch TikTok video")
         raise
 
 
@@ -85,20 +85,20 @@ async def send_contact_email(
     This endpoint verifies the reCAPTCHA token before processing the email.
     """
     logger = get_logger(__name__)
-    logger.info("Processing email send request", extra={"email": contact_request.email})
+    logger.info(f"Processing email send request from: {contact_request.email}")
     
     # Verify reCAPTCHA token
     try:
         is_valid = await verify_recaptcha_token(contact_request.g_recaptcha_response)
         if not is_valid:
-            logger.warning("reCAPTCHA verification failed", extra={"email": contact_request.email})
+            logger.warning(f"reCAPTCHA verification failed - Email: {contact_request.email}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="reCAPTCHA verification failed"
             )
-        logger.debug("reCAPTCHA verification successful", extra={"email": contact_request.email})
+        logger.debug(f"reCAPTCHA verification successful - Email: {contact_request.email}")
     except Exception as e:
-        logger.error("Error during reCAPTCHA verification", exc_info=True, extra={"email": contact_request.email})
+        logger.error(f"Error during reCAPTCHA verification - Email: {contact_request.email}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error during reCAPTCHA verification"
@@ -112,21 +112,17 @@ async def send_contact_email(
             'message': contact_request.message
         }
         result = await uc.send_contact_email(**email_data)
-        logger.info("Contact email sent successfully", extra={"email": contact_request.email})
+        logger.info(f"Contact email sent successfully - Email: {contact_request.email}")
         return result
     except HTTPException as he:
         logger.warning(
-            "Contact email send failed with HTTP exception", 
-            extra={"status_code": he.status_code, "detail": he.detail},
-            exc_info=True
+            f"Contact email send failed with HTTP exception - Status Code: {he.status_code}, Detail: {he.detail}"
         )
         raise
     except Exception as e:
         error_detail = f'{str(e)}\n\n{traceback.format_exc()}'
         logger.error(
-            "Unexpected error sending contact email", 
-            extra={"error": str(e), "error_type": type(e).__name__},
-            exc_info=True
+            f"Unexpected error sending contact email - Error: {str(e)}, Type: {type(e).__name__}"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 

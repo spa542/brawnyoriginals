@@ -23,8 +23,8 @@ async def health_check():
     
     try:
         result = hc.health_check()
-        logger.debug("Health check completed", extra={"status": result.status})
+        logger.debug(f"Health check completed - Status: {result.status}")
         return result
     except Exception as e:
-        logger.error("Health check endpoint failed", exc_info=True)
+        logger.error("Health check endpoint failed")
         raise

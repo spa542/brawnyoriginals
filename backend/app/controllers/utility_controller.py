@@ -31,13 +31,13 @@ async def scrape_latest_youtube_video() -> VideoResponse:
             )
             
         result = VideoResponse(video_id=video["id"])
-        logger.debug("Successfully fetched YouTube video", extra={"video_id": result.video_id})
+        logger.debug(f"Successfully fetched YouTube video with ID: {result.video_id}")
         return result
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Failed to fetch YouTube video", exc_info=True)
+        logger.error(f"Failed to fetch YouTube video: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch latest YouTube video"
@@ -67,13 +67,13 @@ async def scrape_latest_youtube_short() -> VideoResponse:
             )
             
         result = VideoResponse(video_id=video["id"])
-        logger.debug("Successfully fetched YouTube short", extra={"video_id": result.video_id})
+        logger.debug(f"Successfully fetched YouTube short with ID: {result.video_id}")
         return result
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Failed to fetch YouTube short", exc_info=True)
+        logger.error(f"Failed to fetch YouTube short: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch latest YouTube short"
@@ -95,10 +95,10 @@ def scrape_latest_tiktok_video() -> Dict[str, Any]:
         result = VideoResponse(
             video_id="7556011260790328606",
         )
-        logger.debug("Successfully fetched TikTok video", extra={"video_id": result.video_id})
+        logger.debug(f"Successfully fetched TikTok video with ID: {result.video_id}")
         return result
     except Exception as e:
-        logger.error("Failed to fetch TikTok video", exc_info=True)
+        logger.error(f"Failed to fetch TikTok video: {str(e)}")
         raise
 
 
@@ -118,7 +118,7 @@ async def send_contact_email(name: str, email: str, message: str) -> Dict[str, A
         HTTPException: If there's an error sending the email
     """
     logger = get_logger(__name__)
-    logger.info("Processing email send request", extra={"email": email})
+    logger.info(f"Processing email send request from: {email}")
     
     try:
         response = await send_email_util(name, email, message, mode="contact")
@@ -127,7 +127,7 @@ async def send_contact_email(name: str, email: str, message: str) -> Dict[str, A
         # Re-raise HTTP exceptions from the utility
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in send_contact_email: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error in send_contact_email: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while sending the email"

@@ -19,5 +19,5 @@ def health_check() -> HealthCheckResponse:
         logger.debug("Health check completed successfully")
         return response
     except Exception as e:
-        logger.error("Health check failed", exc_info=True)
+        logger.error("Health check failed")
         raise

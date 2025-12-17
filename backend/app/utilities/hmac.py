@@ -30,7 +30,7 @@ async def generate_hmac_token(
         secret_str = await get_doppler_secret("HMAC_SECRET_KEY")
         secret = secret_str.encode('utf-8')
     except Exception as e:
-        logger.error("Failed to retrieve HMAC_SECRET_KEY from Doppler", exc_info=True)
+        logger.error("Failed to retrieve HMAC_SECRET_KEY from Doppler")
         raise RuntimeError("Failed to retrieve HMAC secret from Doppler") from e
     
     # Convert data to JSON and encode to bytes
@@ -54,7 +54,7 @@ async def generate_hmac_token(
         return base64.b64encode(json.dumps(token_data).encode('utf-8')).decode('utf-8')
         
     except Exception as e:
-        logger.error(f"Error generating HMAC token: {str(e)}", exc_info=True)
+        logger.error(f"Error generating HMAC token: {str(e)}")
         raise
 
 
@@ -83,7 +83,7 @@ async def verify_hmac_token(
         secret_str = await get_doppler_secret("HMAC_SECRET_KEY")
         secret = secret_str.encode('utf-8')
     except Exception as e:
-        logger.error("Failed to retrieve HMAC_SECRET_KEY from Doppler", exc_info=True)
+        logger.error("Failed to retrieve HMAC_SECRET_KEY from Doppler")
         raise RuntimeError("Failed to retrieve HMAC secret from Doppler") from e
     
     if current_time is None:

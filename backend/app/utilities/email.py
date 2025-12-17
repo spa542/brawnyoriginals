@@ -77,7 +77,7 @@ async def send_email_util(
         else:
             data["text"] = message
         
-        logger.debug("Sending email", extra={"to": email_to, "subject": email_subject})
+        logger.debug(f"Sending email to: {email_to}, Subject: {email_subject}")
         
         # Prepare files if any
         files_data = []
@@ -104,7 +104,7 @@ async def send_email_util(
             
         response.raise_for_status()
         
-        logger.info("Email sent successfully", extra={"to": email_to, "email": email})
+        logger.info(f"Email sent successfully to: {email_to}, From: {email}")
         
         return {
             "status": "success",
@@ -113,17 +113,17 @@ async def send_email_util(
         
     except requests.exceptions.Timeout as e:
         error_msg = f"Email sending timed out after {e.request.timeout} seconds"
-        logger.error(error_msg, exc_info=True, extra={"email": email, "to": email_to})
+        logger.error(f"{error_msg} - From: {email}, To: {email_to}")
         raise TimeoutError("Email sending timed out. Please try again later.") from e
     except requests.exceptions.HTTPError as e:
         error_msg = f"Email service returned error: {e.response.status_code} - {e.response.text}"
-        logger.error(error_msg, exc_info=True, extra={"email": email, "to": email_to, "status_code": e.response.status_code})
+        logger.error(f"{error_msg} - From: {email}, To: {email_to}, Status Code: {e.response.status_code}")
         raise ConnectionError("Failed to send email due to a service error") from e
     except requests.exceptions.RequestException as e:
         error_msg = f"Failed to send email: {str(e)}"
-        logger.error(error_msg, exc_info=True, extra={"email": email, "to": email_to})
+        logger.error(f"{error_msg} - From: {email}, To: {email_to}")
         raise ConnectionError("Failed to connect to email service") from e
     except Exception as e:
         error_msg = f"Unexpected error while sending email: {str(e)}"
-        logger.error(error_msg, exc_info=True, extra={"email": email, "to": email_to})
+        logger.error(f"{error_msg} - From: {email}, To: {email_to}")
         raise RuntimeError("An error occurred while sending the email") from e
