@@ -11,6 +11,7 @@ const Navigation: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showRecaptcha, setShowRecaptcha] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cartRef = useRef<HTMLDivElement>(null);
 
@@ -37,23 +38,24 @@ const Navigation: React.FC = () => {
 
   const handleRecaptchaVerify = (token: string) => {
     setRecaptchaToken(token);
+    processCheckout(token);
   };
 
-  const handleCheckout = async () => {
-    if (cartItems.length === 0) return;
-    
-    setIsCheckingOut(true);
-    setError(null);
+  const processCheckout = async (token: string) => {
+    // Early return if token is missing or empty
+    if (!token || token.trim() === '') {
+      setIsCheckingOut(false);
+      return;
+    }
     
     try {
-      if (!recaptchaToken) {
-        throw new Error('reCAPTCHA verification is required');
-      }
+      setIsCheckingOut(true);
+      setError(null);
 
       const price_ids = cartItems.map(item => item.priceId);
       
       // Generate token with all items
-      const baseUrl = getBaseUrl(); 
+      const baseUrl = getBaseUrl();
       const tokenResponse = await fetch(`${baseUrl}/api/payments/generate-token`, {
         method: 'POST',
         headers: {
@@ -62,7 +64,7 @@ const Navigation: React.FC = () => {
         credentials: 'same-origin',
         body: JSON.stringify({
           price_ids,
-          captcha_token: recaptchaToken
+          captcha_token: token
         })
       });
 
@@ -103,6 +105,23 @@ const Navigation: React.FC = () => {
       console.error('Checkout error:', err);
       setError(err instanceof Error ? err.message : 'Failed to process checkout. Please try again.');
       setIsCheckingOut(false);
+      // Reset recaptcha on error to allow retry
+      setRecaptchaToken('');
+      setShowRecaptcha(false);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (cartItems.length === 0) return;
+    
+    setError(null);
+    
+    if (!recaptchaToken) {
+      // Show recaptcha if we don't have a token yet
+      setShowRecaptcha(true);
+    } else {
+      // If we already have a token, proceed with checkout
+      processCheckout(recaptchaToken);
     }
   };
 
@@ -291,14 +310,16 @@ const Navigation: React.FC = () => {
         </div>
       </div>
       
-      {/* Hidden reCAPTCHA component */}
-      <div style={{ display: 'none' }}>
-        <ReCAPTCHA 
-          sitekey="6Ldh-dorAAAAAG7kBeNcDUsLM5PtgfZPip2f9jwH"
-          action="checkout"
-          onVerify={handleRecaptchaVerify}
-        />
-      </div>
+      {/* Hidden ReCAPTCHA component - only rendered when needed */}
+      {showRecaptcha && (
+        <div className="absolute opacity-0 w-0 h-0 overflow-hidden">
+          <ReCAPTCHA 
+            sitekey="6Ldh-dorAAAAAG7kBeNcDUsLM5PtgfZPip2f9jwH"
+            action="checkout"
+            onVerify={handleRecaptchaVerify}
+          />
+        </div>
+      )}
     </nav>
   );
 };

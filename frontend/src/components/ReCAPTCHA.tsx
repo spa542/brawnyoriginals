@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 declare global {
   interface Window {
-    grecaptcha: any;
+    grecaptcha?: {
+      ready: (callback: () => void) => void;
+      execute: (sitekey: string, options: { action: string }) => Promise<string>;
+    };
   }
 }
 
@@ -10,41 +13,88 @@ interface ReCAPTCHAProps {
   onVerify: (token: string) => void;
   action: string;
   sitekey: string;
+  maxRetries?: number;
+  retryDelay?: number;
 }
 
-export const ReCAPTCHA = ({ onVerify, action, sitekey }: ReCAPTCHAProps) => {
+export const ReCAPTCHA = ({
+  onVerify,
+  action,
+  sitekey,
+  maxRetries = 3,
+  retryDelay = 1000,
+}: ReCAPTCHAProps) => {
   const recaptchaRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const retryCount = useRef(0);
+  const scriptId = 'google-recaptcha-v3';
 
-  useEffect(() => {
-    // Load reCAPTCHA script
+  const executeRecaptcha = async () => {
+    if (!window.grecaptcha) {
+      console.error('reCAPTCHA not loaded');
+      onVerify('');
+      return;
+    }
+
+    try {
+      const token = await window.grecaptcha.execute(sitekey, { action });
+      onVerify(token);
+    } catch (error) {
+      console.error('reCAPTCHA execution error:', error);
+      onVerify('');
+    }
+  };
+
+  const loadRecaptcha = () => {
+    // Check if script is already loaded
+    if (document.getElementById(scriptId) || window.grecaptcha) {
+      setIsScriptLoaded(true);
+      return;
+    }
+
     const script = document.createElement('script');
-    script.src = `https://www.google.com/recaptcha/api.js?render=${sitekey}`;
+    script.id = scriptId;
+    script.src = `https://www.recaptcha.net/recaptcha/api.js?render=${sitekey}`;
     script.async = true;
     script.defer = true;
+
     script.onload = () => {
-      // Initialize reCAPTCHA
-      window.grecaptcha.ready(() => {
-        // Execute reCAPTCHA with the action
-        window.grecaptcha.execute(sitekey, { action })
-          .then((token: string) => {
-            onVerify(token);
-          })
-          .catch((error: Error) => {
-            console.error('reCAPTCHA error:', error);
-            // Continue with form submission even if reCAPTCHA fails
-            onVerify('');
-          });
-      });
+      setIsScriptLoaded(true);
+      retryCount.current = 0;
     };
-    
+
+    script.onerror = () => {
+      console.error('Failed to load reCAPTCHA script');
+      if (retryCount.current < maxRetries) {
+        retryCount.current += 1;
+        console.log(`Retrying reCAPTCHA load (${retryCount.current}/${maxRetries})...`);
+        setTimeout(loadRecaptcha, retryDelay * retryCount.current);
+      } else {
+        console.error('Max retries reached for reCAPTCHA load');
+        onVerify('');
+      }
+    };
+
     document.head.appendChild(script);
+  };
+
+  useEffect(() => {
+    loadRecaptcha();
 
     return () => {
-      // Clean up
-      document.head.removeChild(script);
+      const script = document.getElementById(scriptId);
+      if (script) {
+        document.head.removeChild(script);
+      }
     };
-  }, [action, onVerify, sitekey]);
+  }, [sitekey]);
+
+  useEffect(() => {
+    if (isScriptLoaded) {
+      window.grecaptcha?.ready(executeRecaptcha);
+    }
+  }, [action, isScriptLoaded]);
 
   return (
     <div>

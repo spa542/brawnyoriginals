@@ -15,28 +15,16 @@ const ContactPage: React.FC = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [recaptchaToken, setRecaptchaToken] = useState('');
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-
+  const [showRecaptcha, setShowRecaptcha] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRecaptchaVerify = useCallback((token: string) => {
-    setRecaptchaToken(token);
-    setRecaptchaReady(true);
-    
-    // If form was already submitted but waiting for reCAPTCHA, submit now
-    if (formSubmitted) {
-      handleFormSubmission();
-    }
-  }, [formSubmitted]);
+    handleFormSubmission(token);
+  }, [formData]);
 
-  const handleFormSubmission = async () => {
-    if (!recaptchaReady) {
-      setFormSubmitted(true);
-      return;
-    }
-
+  const handleFormSubmission = async (token: string) => {
     setIsSubmitting(true);
+    setError(null);
     
     try {
       const baseUrl = getBaseUrl(); 
@@ -47,12 +35,13 @@ const ContactPage: React.FC = () => {
         },
         body: JSON.stringify({
           ...formData,
-          g_recaptcha_response: recaptchaToken
+          g_recaptcha_response: token
         }),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to send message');
       }
 
       await response.json();
@@ -73,11 +62,12 @@ const ContactPage: React.FC = () => {
       
       // Reset form and reCAPTCHA
       setFormData({ name: '', email: '', message: '' });
-      setRecaptchaToken('');
-      setRecaptchaReady(false);
-      setFormSubmitted(false);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+      setShowRecaptcha(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
+      console.error('Error submitting form:', err);
+      
       toast.error(
         'Sorry, we couldn\'t send your message. \nPlease try again later.',
         {
@@ -105,7 +95,7 @@ const ContactPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleFormSubmission();
+    setShowRecaptcha(true);
   };
 
   return (
@@ -182,20 +172,27 @@ const ContactPage: React.FC = () => {
                 <a href="https://policies.google.com/privacy" className="text-tertiary-600 hover:underline ml-1">Privacy Policy</a> and
                 <a href="https://policies.google.com/terms" className="text-tertiary-600 hover:underline ml-1">Terms of Service</a> apply.
               </div>
+              {error && (
+                <div className="text-red-500 text-sm p-3 bg-red-50 rounded-md">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
-                disabled={isSubmitting || !recaptchaReady}
+                disabled={isSubmitting}
                 className={`w-full md:w-auto bg-tertiary-600 text-white px-8 py-3 rounded-md border border-primary hover:bg-tertiary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-500 transition-colors duration-300 font-medium ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : !recaptchaReady ? 'opacity-50 cursor-not-allowed' : ''
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
                 {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
-              <ReCAPTCHA 
-                sitekey="6Ldh-dorAAAAAG7kBeNcDUsLM5PtgfZPip2f9jwH" 
-                action="contact_form_submit"
-                onVerify={handleRecaptchaVerify}
-              />
+              {showRecaptcha && (
+                <ReCAPTCHA 
+                  sitekey="6Ldh-dorAAAAAG7kBeNcDUsLM5PtgfZPip2f9jwH" 
+                  action="contact_form_submit"
+                  onVerify={handleRecaptchaVerify}
+                />
+              )}
             </div>
           </form>
 
