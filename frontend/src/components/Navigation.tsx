@@ -132,8 +132,8 @@ const Navigation: React.FC = () => {
           </div>
           
           {/* Center section - Navigation links */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <div className="hidden sm:flex space-x-8">
+          <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2">
+            <div className="flex space-x-8">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
@@ -262,8 +262,8 @@ const Navigation: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <div className="sm:hidden">
+      {/* Mobile menu - Show on screens smaller than lg (1024px) */}
+      <div className="lg:hidden">
         <div className="pt-2 pb-3 space-y-1">
           {navItems.map((item) => (
             <Link
