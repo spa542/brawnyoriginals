@@ -160,6 +160,7 @@ const ContactPage: React.FC = () => {
               <textarea
                 id="message"
                 name="message"
+                value={formData.message}
                 rows={4}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-tertiary-600 focus:ring-2 focus:ring-tertiary-500/50 text-primary transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-tertiary-500/30"
