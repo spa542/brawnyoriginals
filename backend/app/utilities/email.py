@@ -43,15 +43,17 @@ async def send_email_util(
 
     # Setup email variables
     url = cfg.get("MAILGUN", "url")
-    email_prefix = "Mailgun Sandbox" if is_dev() else "Mailgun Production"
-    email_from = f"{email_prefix} <{cfg.get('MAILGUN', 'from_uri')}>"
     email_to = cfg.get("MAILGUN", "contact_email") if mode == "contact" else email
-    
-    # Determine subject based on mode
+
+    # Determine variables based on mode
     if mode == "contact":
+        email_prefix = "Mailgun Sandbox" if is_dev() else "Mailgun Production"
         email_subject = f"Brawny Originals - Contact Form - Message from {name} <{email}>"
     else: # fulfillment 
+        email_prefix = "Brawny Originals"
         email_subject = "Brawny Originals - Fulfillment Request - Order Details - DO NOT REPLY"
+
+    email_from = f"{email_prefix} <{cfg.get('MAILGUN', 'from_uri')}>"
 
     try:
         mailgun_api_key = await get_doppler_secret("MAILGUN_API_KEY")

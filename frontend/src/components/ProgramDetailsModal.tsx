@@ -83,7 +83,6 @@ const ProgramDetailsModal: React.FC<ProgramDetailsModalProps> = ({ isOpen, onClo
                     }}
                     dataTestId={`modal-add-to-cart-${program.id}`}
                     variant="modal"
-                    comingSoon={true}
                   />
                 </div>
               </div>
